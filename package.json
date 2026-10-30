@@ -1,0 +1,11 @@
+{
+  "name": "afterhour",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Night-rain droplets land on text, refract and magnify it, gather, and slide off.",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node --test tests/*.test.js"
+  }
+}

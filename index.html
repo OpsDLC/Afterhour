@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#14161A">
+  <meta name="description" content="Afterhour — night rain lands on your words, magnifies them, gathers, and slides away.">
+  <title>Afterhour</title>
+  <link rel="preload" href="assets/fonts/InstrumentSerif-Regular-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="stage" role="img" aria-label="Rain drops landing on the words below, magnifying them and sliding away."></canvas>
+  <p id="words-a11y" class="sr-only"></p>
+
+  <nav id="chrome" aria-label="Afterhour controls">
+    <span class="mark">Afterhour</span>
+    <div class="sources" role="radiogroup" aria-label="What drives the rain">
+      <button type="button" role="radio" data-source="simulated" aria-checked="true">Night rain</button>
+      <button type="button" role="radio" data-source="mic" aria-checked="false">Microphone</button>
+      <button type="button" role="radio" data-source="file" aria-checked="false">Audio file</button>
+      <button type="button" role="radio" data-source="still" aria-checked="false">Still</button>
+    </div>
+    <div class="tools">
+      <button type="button" id="btn-pause" aria-pressed="false" title="Pause (Space)">Pause</button>
+      <button type="button" id="btn-export" title="Export video (E)">Export</button>
+      <button type="button" id="btn-tune" aria-expanded="false" aria-controls="panel" title="Tune (T)">Tune</button>
+      <button type="button" id="btn-about" title="About and privacy (?)">About</button>
+    </div>
+    <span id="source-status" class="status" aria-live="polite"></span>
+  </nav>
+
+  <aside id="panel" hidden aria-label="Tuning panel">
+    <header>
+      <h2>Tune</h2>
+      <button type="button" id="panel-close" aria-label="Close tuning panel">Close</button>
+    </header>
+    <label class="words">
+      <span>Words</span>
+      <textarea id="words" rows="5" spellcheck="false"></textarea>
+    </label>
+    <div id="panel-groups"></div>
+  </aside>
+
+  <pre id="stats" hidden aria-hidden="true"></pre>
+  <input type="file" id="file-input" accept="audio/*" hidden>
+
+  <dialog id="mic-dialog" aria-labelledby="mic-title">
+    <form method="dialog">
+      <h2 id="mic-title">Listen to the rain?</h2>
+      <p>Afterhour can let real rain drive the droplets. Sound from your microphone is analysed
+        <em>on this device only</em>: loudness, rhythm and how much bass or treble there is.</p>
+      <ul>
+        <li>No speech recognition.</li>
+        <li>Nothing is recorded, stored or uploaded.</li>
+        <li>The microphone is never played back through your speakers.</li>
+      </ul>
+      <p>Your browser will ask for permission next. You can stop at any time by choosing another source.</p>
+      <div class="buttons">
+        <button value="cancel" type="submit">Not now</button>
+        <button value="ok" type="submit" class="primary">Continue</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="export-dialog" aria-labelledby="export-title">
+    <form method="dialog">
+      <h2 id="export-title">Export a clip</h2>
+      <p>Records the canvas in your browser and saves a video file. Nothing is uploaded.</p>
+      <label class="field">Length
+        <select id="export-seconds">
+          <option value="5">5 seconds</option>
+          <option value="8" selected>8 seconds</option>
+          <option value="15">15 seconds</option>
+        </select>
+      </label>
+      <label class="field check">
+        <input type="checkbox" id="export-audio">
+        <span>Include the original audio <small id="export-audio-note">(off by default — it may contain voices or room sound)</small></span>
+      </label>
+      <p id="export-format" class="hint"></p>
+      <progress id="export-progress" max="1" value="0" hidden></progress>
+      <div class="buttons">
+        <button value="cancel" type="submit" id="export-cancel">Close</button>
+        <button value="start" type="button" class="primary" id="export-start">Record</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="about-dialog" aria-labelledby="about-title">
+    <form method="dialog">
+      <h2 id="about-title">Afterhour</h2>
+      <p>Night rain lands on your words, magnifies and turns them over, gathers, and slides away.</p>
+      <h3>Privacy</h3>
+      <p>Everything runs in this page. Audio is analysed on-device with Web Audio and is never uploaded.
+        Exported videos contain no original audio unless you tick the box when exporting.</p>
+      <h3>Keys</h3>
+      <dl class="keys">
+        <dt>Space</dt><dd>Pause / resume</dd>
+        <dt>Click / tap</dt><dd>Drop a drop</dd>
+        <dt>T</dt><dd>Tuning panel</dd>
+        <dt>E</dt><dd>Export video</dd>
+        <dt>S</dt><dd>Frame-rate stats</dd>
+        <dt>C</dt><dd>Clear drops</dd>
+        <dt>H</dt><dd>Hide controls</dd>
+      </dl>
+      <p class="hint">Type set in Instrument Serif (SIL Open Font License).</p>
+      <div class="buttons"><button value="close" type="submit" class="primary">Close</button></div>
+    </form>
+  </dialog>
+
+  <noscript><p class="noscript">Afterhour needs JavaScript to draw the rain.</p></noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
