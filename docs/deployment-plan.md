@@ -8,11 +8,11 @@ no domain was registered, nothing was bought. Each step below needs Yunhan's exp
 There is no build step. The site is the repository root as committed:
 
 ```
-index.html  styles.css  src/*.js  assets/fonts/*.woff2  (+ assets/fonts/OFL.txt)
+index.html  styles.css  src/*.js  src/vendor/*.js  assets/fonts/*  (+ assets/fonts/OFL.txt)
 ```
 
 `docs/`, `tests/` and `package.json` are harmless if served but could be excluded with the
-Actions-based option below. Total payload ≈ 100 KB (fonts ≈ 43 KB), no third-party requests —
+Actions-based option below. Total payload ≈ 300 KB (opentype.js ≈ 170 KB, font ≈ 80 KB), no third-party requests —
 fonts are self-hosted, so the page makes no calls to Google or any CDN.
 
 ## Option A — deploy from a branch (simplest)
@@ -31,7 +31,7 @@ upload so a failing simulation test blocks the deploy. Recommended once there is
 ## HTTPS
 
 - `*.github.io` is always HTTPS. Keep **Enforce HTTPS** on.
-- HTTPS is required, not optional: the microphone (`getUserMedia`) only works in a secure context.
+- The Clipboard API (Copy SVG) needs a secure context (https), which Pages provides.
 - With a custom domain, Pages provisions a Let's Encrypt certificate after DNS resolves; enable
   **Enforce HTTPS** once it is issued (can take up to ~24 h).
 

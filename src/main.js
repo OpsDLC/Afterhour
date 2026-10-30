@@ -1,398 +1,356 @@
-import { applyCssTokens, font } from './tokens.js';
-import { defaults, reducedMotionOverrides } from './params.js';
-import { RainSim, mulberry32 } from './sim.js';
-import { Renderer } from './renderer.js';
-import { renderTextTexture } from './textTexture.js';
-import { AudioEngine } from './audio.js';
-import { RainDriver } from './driver.js';
-import { buildPanel } from './panel.js';
-import { FrameStats, Benchmark, AutoQuality } from './stats.js';
-import { canRecord, pickMimeType, recordCanvas, downloadBlob } from './recorder.js';
+import { schema, defaults } from './params.js';
+import { buildSvg, svgToPng, download } from './svg.js';
+import { STEP } from './engine.js';
 
-const DEFAULT_WORDS = [
-  'the rain kept the city awake',
-  'and every word I didn’t send',
-  'gathered in the dark, grew heavy,',
-  'and let go',
-].join('\n');
-
-const STORE_PARAMS = 'afterhour.params.v1';
-const STORE_WORDS = 'afterhour.words.v1';
+const DEFAULT_TEXT = 'Afterhour\nnight rain';
+const DEFAULT_FONT_URL = 'assets/fonts/InstrumentSerif-Regular.ttf';
+const STORE_PARAMS = 'afterhour.tool.params.v1';
+const STORE_TEXT = 'afterhour.tool.text.v1';
 
 const store = {
-  get(key) { try { return localStorage.getItem(key); } catch { return null; } },
-  set(key, v) { try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } },
-  del(key) { try { localStorage.removeItem(key); } catch { /* storage unavailable */ } },
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* unavailable */ } },
+  del(k) { try { localStorage.removeItem(k); } catch { /* unavailable */ } },
 };
-
-const $ = (sel) => document.querySelector(sel);
-const query = new URLSearchParams(location.search);
-
-applyCssTokens();
+const $ = (s) => document.querySelector(s);
 
 // ---- State ------------------------------------------------------------------
 
 const params = defaults();
-const saved = store.get(STORE_PARAMS);
-let hasSavedParams = false;
-if (saved) {
-  try { Object.assign(params, JSON.parse(saved)); hasSavedParams = true; } catch { /* ignore corrupt */ }
+try { Object.assign(params, JSON.parse(store.get(STORE_PARAMS) || '{}')); } catch { /* ignore */ }
+let text = store.get(STORE_TEXT) ?? DEFAULT_TEXT;
+
+let last = null; // last render result { d, artboard, stats }
+let fontName = 'Instrument Serif';
+
+const save = () => {
+  store.set(STORE_PARAMS, JSON.stringify(params));
+  store.set(STORE_TEXT, text);
+};
+
+// ---- Worker -----------------------------------------------------------------
+
+const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+let fontReady = false;
+let inflight = 0; // id of the render in flight, 0 = none
+let dirty = false;
+let nextId = 1;
+
+worker.onmessage = (e) => {
+  const msg = e.data;
+  if (msg.type === 'font') {
+    if (msg.ok) {
+      fontReady = true;
+      fontName = msg.name;
+      $('#font-name').textContent = msg.name;
+      setStatus('');
+      requestRender();
+    } else {
+      setStatus(`Font could not be read: ${msg.error}`);
+    }
+    return;
+  }
+  if (msg.id !== inflight) return;
+  inflight = 0;
+  if (msg.type === 'error') setStatus(`Render failed: ${msg.error}`);
+  else applyResult(msg);
+  if (playing) tickPlay();
+  if (dirty) { dirty = false; requestRender(); }
+};
+
+function requestRender() {
+  if (!fontReady) return;
+  if (inflight) { dirty = true; return; }
+  inflight = nextId++;
+  worker.postMessage({ type: 'render', id: inflight, text, params: { ...params } });
 }
-const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)');
-if (!hasSavedParams && prefersReduced.matches) params.reducedMotion = true;
-if (query.has('stats') || query.has('bench')) params.stats = true;
 
-let effective = { ...params };
-function updateEffective() {
-  effective = params.reducedMotion ? { ...params, ...reducedMotionOverrides } : { ...params };
-}
-updateEffective();
-
-let words = query.get('text') || store.get(STORE_WORDS) || DEFAULT_WORDS;
-const seed = query.has('seed') ? Number(query.get('seed')) : (Math.random() * 2 ** 32) >>> 0;
-const rand = mulberry32(seed);
-
-const canvas = $('#stage');
-const renderer = new Renderer(canvas);
-const sim = new RainSim({ rand });
-const driver = new RainDriver(rand);
-const audio = new AudioEngine();
-const frameStats = new FrameStats();
-const autoQuality = new AutoQuality();
-let source = 'simulated';
-let paused = false;
-let texture = null;
-let bench = null;
-
-// ---- Layout -----------------------------------------------------------------
-
-function layout() {
-  const cssW = Math.max(1, Math.round(window.innerWidth));
-  const cssH = Math.max(1, Math.round(window.innerHeight));
-  const dpr = Math.min(window.devicePixelRatio || 1, params.pixelRatio);
-  texture = renderTextTexture(words, cssW, cssH, dpr);
-  renderer.resize(cssW, cssH, dpr);
-  renderer.setTexture(texture);
-  sim.setLayout({ width: cssW, height: cssH, H: texture.H, textBox: texture.textBox });
-  $('#words-a11y').textContent = words;
+async function loadFontBuffer(buffer) {
+  fontReady = false;
+  worker.postMessage({ type: 'font', buffer }, [buffer]);
 }
 
-let resizeTimer = 0;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(layout, 120);
+async function loadDefaultFont() {
+  const res = await fetch(DEFAULT_FONT_URL);
+  await loadFontBuffer(await res.arrayBuffer());
+  $('#font-reset').hidden = true;
+}
+
+// ---- Preview ----------------------------------------------------------------
+
+const art = $('#art');
+const ink = $('#art-ink');
+const paper = $('#art-paper');
+
+function applyResult(msg) {
+  last = msg;
+  const { width, height } = msg.artboard;
+  art.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  paper.setAttribute('width', width);
+  paper.setAttribute('height', height);
+  ink.setAttribute('d', msg.d);
+  const s = msg.stats;
+  const kb = (buildSvgString().length / 1024).toFixed(1);
+  $('#stats').textContent =
+    `${s.touched}/${s.glyphs} glyphs wet · ${s.drops} drops · ${s.trails} trails · ${s.nodes} nodes · ${kb} KB · ${s.ms.toFixed(0)} ms`;
+  if (s.failures) setStatus(`${s.failures} boolean operation(s) skipped on this frame.`);
+}
+
+function applyColours() {
+  ink.style.fill = params.ink;
+  paper.style.fill = params.paper;
+}
+
+function setStatus(t) { $('#status').textContent = t; }
+
+// ---- Sidebar ----------------------------------------------------------------
+
+const controls = new Map();
+
+function fmt(v, step) {
+  const dec = step >= 1 ? 0 : Math.min(3, (String(step).split('.')[1] || '').length);
+  return Number(v).toFixed(dec);
+}
+
+function buildSidebar() {
+  const root = $('#controls');
+  const groups = new Map();
+  for (const p of schema) {
+    if (p.key === 'time') continue; // lives in the timeline
+    if (!groups.has(p.group)) {
+      const det = document.createElement('details');
+      det.className = 'group';
+      det.open = ['Type', 'Rain', 'Lens'].includes(p.group);
+      const sum = document.createElement('summary');
+      sum.textContent = p.group;
+      const rows = document.createElement('div');
+      rows.className = 'rows';
+      det.append(sum, rows);
+      root.append(det);
+      groups.set(p.group, rows);
+    }
+    groups.get(p.group).append(buildRow(p));
+  }
+}
+
+function buildRow(p) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const id = `p-${p.key}`;
+  const name = document.createElement('label');
+  name.className = 'name';
+  name.textContent = p.label;
+  name.htmlFor = id;
+  row.append(name);
+
+  const commit = (v) => {
+    params[p.key] = v;
+    if (p.key === 'ink' || p.key === 'paper') applyColours(); else requestRender();
+    save();
+  };
+
+  if (p.type === 'bool') {
+    row.classList.add('wide');
+    const cb = Object.assign(document.createElement('input'), { type: 'checkbox', id });
+    cb.addEventListener('change', () => commit(cb.checked));
+    row.append(cb);
+    controls.set(p.key, { sync: () => { cb.checked = !!params[p.key]; } });
+  } else if (p.type === 'select') {
+    row.classList.add('wide');
+    const sel = Object.assign(document.createElement('select'), { id });
+    for (const o of p.options) sel.append(new Option(o, o));
+    sel.addEventListener('change', () => commit(sel.value));
+    row.append(sel);
+    controls.set(p.key, { sync: () => { sel.value = params[p.key]; } });
+  } else if (p.type === 'color') {
+    row.classList.add('wide');
+    const c = Object.assign(document.createElement('input'), { type: 'color', id });
+    c.addEventListener('input', () => commit(c.value.toUpperCase()));
+    row.append(c);
+    controls.set(p.key, { sync: () => { c.value = params[p.key]; } });
+  } else if (p.type === 'seed') {
+    row.classList.add('wide');
+    const wrap = document.createElement('div');
+    wrap.className = 'seed';
+    const n = Object.assign(document.createElement('input'), { type: 'number', id, min: 0, max: 4294967295, step: 1 });
+    const dice = Object.assign(document.createElement('button'), { type: 'button', textContent: 'New', title: 'New seed (R)' });
+    n.addEventListener('change', () => commit(Math.max(0, Math.floor(Number(n.value) || 0))));
+    dice.addEventListener('click', () => { reseed(); });
+    wrap.append(n, dice);
+    row.append(wrap);
+    controls.set(p.key, { sync: () => { n.value = params[p.key]; } });
+  } else {
+    const range = Object.assign(document.createElement('input'), { type: 'range', min: p.min, max: p.max, step: p.step, id });
+    const box = Object.assign(document.createElement('input'), { type: 'number', min: p.min, max: p.max, step: p.step });
+    box.setAttribute('aria-label', p.label);
+    range.addEventListener('input', () => { box.value = fmt(range.value, p.step); commit(Number(range.value)); });
+    box.addEventListener('change', () => {
+      const v = Math.min(p.max, Math.max(p.min, Number(box.value)));
+      if (!Number.isFinite(v)) return;
+      range.value = v;
+      box.value = fmt(v, p.step);
+      commit(v);
+    });
+    row.append(range, box);
+    controls.set(p.key, { sync: () => { range.value = params[p.key]; box.value = fmt(params[p.key], p.step); } });
+  }
+  return row;
+}
+
+function syncControls() {
+  for (const c of controls.values()) c.sync();
+  syncTime();
+}
+
+function reseed() {
+  params.seed = (Math.random() * 2 ** 32) >>> 0;
+  controls.get('seed').sync();
+  save();
+  requestRender();
+}
+
+// ---- Timeline ---------------------------------------------------------------
+
+const timeEl = $('#time');
+const timeOut = $('#time-out');
+const timeSpec = schema.find((p) => p.key === 'time');
+timeEl.max = timeSpec.max;
+timeEl.step = STEP;
+
+function syncTime() {
+  timeEl.value = params.time;
+  timeOut.textContent = `${params.time.toFixed(2)} s`;
+}
+
+function setTime(t, { render = true } = {}) {
+  params.time = Math.min(timeSpec.max, Math.max(0, Math.round(t / STEP) * STEP));
+  syncTime();
+  if (render) requestRender();
+}
+
+timeEl.addEventListener('input', () => { setTime(Number(timeEl.value)); save(); });
+$('#btn-back').addEventListener('click', () => setTime(params.time - STEP));
+$('#btn-fwd').addEventListener('click', () => setTime(params.time + STEP));
+
+let playing = false;
+let playClock = 0;
+function setPlaying(v) {
+  playing = v;
+  const b = $('#btn-play');
+  b.setAttribute('aria-pressed', String(v));
+  b.textContent = v ? 'Pause' : 'Play';
+  if (v) {
+    if (params.time >= timeSpec.max - STEP) setTime(0, { render: false });
+    playClock = performance.now();
+    requestRender();
+  } else {
+    save();
+  }
+}
+/** Advance by real elapsed time after each finished frame (frame rate adapts to compute cost). */
+function tickPlay() {
+  const now = performance.now();
+  const dt = Math.min(0.25, (now - playClock) / 1000);
+  playClock = now;
+  if (params.time + dt >= timeSpec.max) { setTime(timeSpec.max); setPlaying(false); return; }
+  setTime(params.time + dt);
+}
+$('#btn-play').addEventListener('click', () => setPlaying(!playing));
+
+// ---- Text & font -----------------------------------------------------------
+
+const textEl = $('#text');
+textEl.value = text;
+textEl.addEventListener('input', () => {
+  text = textEl.value;
+  save();
+  requestRender();
 });
 
-// ---- Loop -------------------------------------------------------------------
-
-let last = performance.now();
-function frame(now) {
-  const frameMs = now - last;
-  last = now;
-  const dt = Math.min(0.1, frameMs / 1000);
-  const t0 = performance.now();
-
-  if (!paused) {
-    let features = null;
-    if (source === 'mic' || source === 'file') features = audio.analyse(dt);
-    else if (source === 'simulated') features = driver.simulate(dt);
-    const drive = driver.drive(features, effective, dt, source);
-    if (bench) bench.prepare(dt);
-    sim.update(dt, bench ? bench.params : effective, bench ? { baseMul: 0, rate: 0, fine: 0, burst: 0, slideBoost: 0, sizeMul: 1 } : drive);
-  }
-  renderer.draw(sim, effective);
-
-  const workMs = performance.now() - t0;
-  frameStats.push(frameMs);
-  if (bench) {
-    bench.record(frameMs, workMs);
-    if (bench.done) finishBench();
-  }
-  if (params.stats) drawStats(workMs);
-  if (params.autoQuality && !bench && !paused && !document.hidden) {
-    const next = autoQuality.push(frameMs, Math.min(params.pixelRatio, window.devicePixelRatio || 1));
-    if (next !== null) {
-      params.pixelRatio = next;
-      panelApi.sync();
-      layout();
-    }
-  }
-  requestAnimationFrame(frame);
-}
-
-const statsEl = $('#stats');
-let statsTick = 0;
-let lastWork = 0;
-function drawStats(workMs) {
-  lastWork = lastWork * 0.9 + workMs * 0.1;
-  if (++statsTick % 10) return;
-  const s = frameStats.summary();
-  const lines = [
-    `${s.fps.toFixed(0).padStart(3)} fps  ${s.avg.toFixed(1)} ms  p95 ${s.p95.toFixed(1)} ms`,
-    `work ${lastWork.toFixed(2)} ms  dpr ${renderer.dpr}`,
-    `${sim.drops.length} drops  ${sim.trails.length} trails  cover ${(sim.coverage() * 100).toFixed(0)}%`,
-  ];
-  if (bench && !bench.done) lines.push(`bench: ${bench.counts[bench.step]} drops…`);
-  if (benchResults) {
-    lines.push('', 'drops   fps  frame  p95   work');
-    for (const r of benchResults) {
-      lines.push(`${String(r.drops).padStart(5)} ${String(r.fps).padStart(5)} ${String(r.frameMs).padStart(6)} ${String(r.p95Ms).padStart(5)} ${String(r.workMs).padStart(6)}`);
-    }
-  }
-  statsEl.textContent = lines.join('\n');
-}
-
-let benchResults = null;
-function startBench() {
-  sim.clear();
-  setSource('still');
-  bench = new Benchmark({ sim, params: effective });
-}
-function finishBench() {
-  benchResults = bench.results;
-  window.__afterhourBench = { results: benchResults, dpr: renderer.dpr, size: [renderer.cssW, renderer.cssH], ua: navigator.userAgent };
-  console.log('[afterhour bench]', JSON.stringify(window.__afterhourBench));
-  bench = null;
-  sim.clear();
-}
-
-// ---- Sources ----------------------------------------------------------------
-
-const statusEl = $('#source-status');
-function setStatus(text) { statusEl.textContent = text; }
-
-function markSource(name) {
-  source = name;
-  for (const b of document.querySelectorAll('[data-source]')) {
-    b.setAttribute('aria-checked', String(b.dataset.source === name));
-  }
-}
-
-async function setSource(name) {
-  if (name === 'mic') {
-    const ok = await askMicPermission();
-    if (!ok) return;
-    try {
-      await audio.useMicrophone();
-      markSource('mic');
-      setStatus('Listening on this device. Nothing is recorded or uploaded.');
-    } catch (err) {
-      setStatus(micErrorText(err));
-    }
-    return;
-  }
-  if (name === 'file') {
-    $('#file-input').click();
-    return;
-  }
-  audio.stop();
-  markSource(name);
-  setStatus(name === 'still' ? 'Still. Click or tap to place drops.' : '');
-}
-
-function micErrorText(err) {
-  if (!window.isSecureContext) return 'The microphone needs a secure (https) page.';
-  if (!navigator.mediaDevices?.getUserMedia) return 'This browser does not offer microphone input.';
-  if (err && err.name === 'NotAllowedError') return 'Microphone permission was declined. You can allow it in the browser’s site settings.';
-  if (err && err.name === 'NotFoundError') return 'No microphone was found.';
-  return `Could not start the microphone${err && err.message ? `: ${err.message}` : '.'}`;
-}
-
-function askMicPermission() {
-  const dlg = $('#mic-dialog');
-  return new Promise((resolve) => {
-    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok'), { once: true });
-    dlg.returnValue = '';
-    dlg.showModal();
-  });
-}
-
-$('#file-input').addEventListener('change', async (e) => {
+$('#font-file').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
+  setStatus(`Loading ${file.name}…`);
+  await loadFontBuffer(await file.arrayBuffer());
+  $('#font-reset').hidden = false;
+});
+$('#font-reset').addEventListener('click', () => loadDefaultFont());
+
+// ---- Export -----------------------------------------------------------------
+
+function buildSvgString() {
+  if (!last) return '';
+  return buildSvg(last.d, last.artboard, {
+    ink: params.ink,
+    paper: params.paper,
+    background: params.exportBackground,
+    title: `${text.replace(/\n/g, ' ')} — Afterhour, seed ${params.seed}, t=${params.time.toFixed(2)}s`,
+  });
+}
+
+function fileStem() {
+  const slug = text.trim().split('\n')[0].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'afterhour';
+  return `${slug}-s${params.seed}-t${params.time.toFixed(2).replace('.', '_')}`;
+}
+
+function exportSvg() {
+  const svg = buildSvgString();
+  if (!svg) return;
+  download(new Blob([svg], { type: 'image/svg+xml' }), `${fileStem()}.svg`);
+  setStatus('SVG exported.');
+}
+
+$('#btn-svg').addEventListener('click', exportSvg);
+$('#btn-png').addEventListener('click', async () => {
+  const svg = buildSvgString();
+  if (!svg) return;
   try {
-    await audio.useFile(file);
-    markSource('file');
-    setStatus(`Playing “${file.name}” locally.`);
+    const blob = await svgToPng(svg, last.artboard.width, last.artboard.height, 2);
+    download(blob, `${fileStem()}@2x.png`);
+    setStatus('PNG exported.');
   } catch (err) {
-    setStatus(`Could not play that file${err && err.message ? `: ${err.message}` : '.'}`);
+    setStatus(err.message);
   }
 });
-
-for (const b of document.querySelectorAll('[data-source]')) {
-  b.addEventListener('click', () => setSource(b.dataset.source));
-}
-
-// ---- Interaction ------------------------------------------------------------
-
-canvas.addEventListener('pointerdown', (e) => {
-  const H = sim.layout.H;
-  const diam = H * (0.8 + rand() * 0.5) * effective.sizeScale;
-  sim.addDrop(e.clientX, e.clientY, diam, effective);
+$('#btn-copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(buildSvgString());
+    setStatus('SVG copied to clipboard.');
+  } catch {
+    setStatus('Clipboard is not available here — use Export SVG.');
+  }
+});
+$('#btn-copy-params').addEventListener('click', async () => {
+  const json = JSON.stringify({ text, font: fontName, ...params }, null, 2);
+  try { await navigator.clipboard.writeText(json); setStatus('Settings copied.'); } catch { console.log(json); setStatus('Settings logged to console.'); }
+});
+$('#btn-reset').addEventListener('click', () => {
+  Object.assign(params, defaults());
+  store.del(STORE_PARAMS);
+  syncControls();
+  applyColours();
+  requestRender();
 });
 
-function setPaused(v) {
-  paused = v;
-  audio.setPaused(v);
-  const b = $('#btn-pause');
-  b.setAttribute('aria-pressed', String(v));
-  b.textContent = v ? 'Resume' : 'Pause';
-}
-$('#btn-pause').addEventListener('click', () => setPaused(!paused));
-
-const panel = $('#panel');
-function togglePanel(force) {
-  const open = force ?? panel.hidden;
-  panel.hidden = !open;
-  $('#btn-tune').setAttribute('aria-expanded', String(open));
-}
-$('#btn-tune').addEventListener('click', () => togglePanel());
-$('#panel-close').addEventListener('click', () => togglePanel(false));
-$('#btn-about').addEventListener('click', () => $('#about-dialog').showModal());
-
-function setStatsVisible(v) {
-  params.stats = v;
-  statsEl.hidden = !v;
-  panelApi.sync();
-}
-
-const panelApi = buildPanel($('#panel-groups'), params, {
-  onChange(key) {
-    updateEffective();
-    if (key === 'pixelRatio') layout();
-    if (key === 'stats') statsEl.hidden = !params.stats;
-    store.set(STORE_PARAMS, JSON.stringify(params));
-  },
-  onReset() {
-    Object.assign(params, defaults());
-    if (prefersReduced.matches) params.reducedMotion = true;
-    store.del(STORE_PARAMS);
-    updateEffective();
-    panelApi.sync();
-    statsEl.hidden = !params.stats;
-    layout();
-  },
-});
-statsEl.hidden = !params.stats;
-
-const wordsEl = $('#words');
-wordsEl.value = words;
-let wordsTimer = 0;
-wordsEl.addEventListener('input', () => {
-  clearTimeout(wordsTimer);
-  wordsTimer = setTimeout(() => {
-    words = wordsEl.value.trim() ? wordsEl.value : DEFAULT_WORDS;
-    store.set(STORE_WORDS, wordsEl.value);
-    layout();
-  }, 200);
-});
-
-// Idle: fade the controls so only the words and rain remain.
-let idleTimer = 0;
-function wake() {
-  document.body.classList.remove('idle');
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => {
-    if (panel.hidden && !document.querySelector('dialog[open]')) document.body.classList.add('idle');
-  }, 3500);
-}
-['pointermove', 'pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, wake, { passive: true }));
-wake();
+// ---- Keys -------------------------------------------------------------------
 
 window.addEventListener('keydown', (e) => {
-  if (e.target.closest && e.target.closest('textarea, input, select, dialog')) return;
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  switch (e.key) {
-    case ' ':
-      if (e.target.closest && e.target.closest('button')) return;
-      e.preventDefault();
-      setPaused(!paused);
-      break;
-    case 't': case 'T': togglePanel(); break;
-    case 'e': case 'E': openExport(); break;
-    case 's': case 'S': setStatsVisible(!params.stats); break;
-    case 'c': case 'C': sim.clear(); break;
-    case 'h': case 'H': document.body.classList.toggle('hide-ui'); break;
-    case '?': $('#about-dialog').showModal(); break;
-    case 'Escape': togglePanel(false); break;
-    default: break;
-  }
-});
-
-// ---- Export (H4N-10) --------------------------------------------------------
-
-const exportDlg = $('#export-dialog');
-let recording = false;
-function openExport() {
-  if (!canRecord(canvas)) {
-    setStatus('Video export is not supported in this browser.');
-    return;
-  }
-  const audioBox = $('#export-audio');
-  const hasAudio = audio.mode !== 'none';
-  audioBox.checked = false; // never carried over: opt in every time
-  audioBox.disabled = !hasAudio;
-  $('#export-audio-note').textContent = hasAudio
-    ? '(off by default — it may contain voices or room sound)'
-    : '(no audio source is active)';
-  updateFormatHint();
-  $('#export-progress').hidden = true;
-  $('#export-start').disabled = false;
-  exportDlg.showModal();
-}
-function updateFormatHint() {
-  const type = pickMimeType($('#export-audio').checked);
-  $('#export-format').textContent = type
-    ? `Format: ${type.includes('mp4') ? 'MP4 (H.264)' : 'WebM — some apps may need it converted to MP4'}.`
-    : 'This browser cannot record video.';
-}
-$('#export-audio').addEventListener('change', updateFormatHint);
-$('#btn-export').addEventListener('click', openExport);
-$('#export-start').addEventListener('click', async () => {
-  if (recording) return;
-  recording = true;
-  const seconds = Number($('#export-seconds').value);
-  const optIn = $('#export-audio').checked;
-  const prog = $('#export-progress');
-  prog.hidden = false;
-  prog.value = 0;
-  $('#export-start').disabled = true;
-  if (paused) setPaused(false);
-  try {
-    const { blob, ext } = await recordCanvas(canvas, {
-      seconds,
-      audioTrack: optIn ? audio.audioTrack() : null,
-      onProgress: (k) => { prog.value = k; },
-    });
-    const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-    downloadBlob(blob, `afterhour-${stamp}.${ext}`);
-    setStatus(`Saved a ${seconds}s clip${optIn ? ' with original audio' : ' (no audio)'}.`);
-    exportDlg.close();
-  } catch (err) {
-    setStatus(`Export failed${err && err.message ? `: ${err.message}` : '.'}`);
-  } finally {
-    recording = false;
-    $('#export-start').disabled = false;
-  }
+  const inField = e.target.closest && e.target.closest('textarea, input:not([type="range"]), select');
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') { e.preventDefault(); exportSvg(); return; }
+  if (inField || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === ' ' && !(e.target.closest && e.target.closest('button'))) { e.preventDefault(); setPlaying(!playing); }
+  else if (e.key === 'ArrowLeft' && e.target === document.body) setTime(params.time - (e.shiftKey ? 1 : STEP));
+  else if (e.key === 'ArrowRight' && e.target === document.body) setTime(params.time + (e.shiftKey ? 1 : STEP));
+  else if (e.key === 'r' || e.key === 'R') reseed();
 });
 
 // ---- Start ------------------------------------------------------------------
 
-async function start() {
-  try {
-    await Promise.race([
-      document.fonts.load(`${font.weight} 64px "Instrument Serif"`),
-      new Promise((r) => setTimeout(r, 1500)),
-    ]);
-  } catch { /* fall back to system serif */ }
-  layout();
-  // Re-render once any late font finishes loading.
-  document.fonts?.ready?.then(() => layout());
-  if (query.has('debug')) togglePanel(true);
-  if (query.has('bench')) startBench();
-  requestAnimationFrame((t) => { last = t; frame(t); });
-}
+buildSidebar();
+syncControls();
+applyColours();
+setStatus('Loading font…');
+loadDefaultFont().catch((err) => setStatus(`Could not load the default font: ${err.message}`));
 
-window.__afterhour = { sim, params, audio, effective: () => effective, startBench, setSource, layout };
-start();
+window.__afterhour = { params, get last() { return last; }, setTime, requestRender, exportSvgString: buildSvgString };

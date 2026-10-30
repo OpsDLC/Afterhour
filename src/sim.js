@@ -1,5 +1,5 @@
 // Rain simulation: droplets land, accumulate, merge, creep, pause and slide off,
-// leaving fading wet trails. DOM-free so it can be unit-tested in Node.
+// leaving fading wet trails. Deterministic for a given seed, DOM-free.
 // Units are CSS pixels; behaviour is expressed in letter heights (H).
 
 export function mulberry32(seed) {
@@ -18,18 +18,14 @@ const INTRO_SECONDS = 5;
 const MERGE_TOUCH = 0.92; // centre distance / (r1 + r2) at which drops coalesce
 const STOP_RATIO = 0.55; // a sliding drop sticks again below this share of the slide size
 
-export const quietDrive = Object.freeze({ baseMul: 1, rate: 0, fine: 0, burst: 0, slideBoost: 0, sizeMul: 1 });
-
 export class RainSim {
   constructor({ rand = Math.random } = {}) {
     this.rand = rand;
     this.drops = [];
     this.trails = [];
-    this.splashes = [];
     this.time = 0;
     this.nextId = 1;
     this.spawnAcc = 0;
-    this.fineAcc = 0;
     this.layout = { width: 1, height: 1, H: 20, textBox: { x: 0, y: 0, w: 1, h: 1 } };
   }
 
@@ -49,7 +45,6 @@ export class RainSim {
   clear() {
     this.drops.length = 0;
     this.trails.length = 0;
-    this.splashes.length = 0;
     this.time = 0;
   }
 
@@ -62,7 +57,7 @@ export class RainSim {
   }
 
   /** Add a drop with diameter `diam` (px). Returns the drop. */
-  addDrop(x, y, diam, params, { splash = true } = {}) {
+  addDrop(x, y, diam) {
     const d = {
       id: this.nextId++,
       x, y,
@@ -71,20 +66,15 @@ export class RainSim {
       state: 'rest',
       t: 0,
       target: 0,
-      seed: this.rand() * 1000,
-      wobble: 0.6,
       trail: null,
       born: this.time,
     };
     this.drops.push(d);
-    if (splash && params && params.splash > 0) {
-      this.splashes.push({ x, y, r: d.r, t: 0, life: 0.45, strength: params.splash });
-    }
     return d;
   }
 
   /** Pick a diameter (px) from the small/medium/large distribution. */
-  pickDiameter(p, sizeMul = 1) {
+  pickDiameter(p) {
     const H = this.layout.H;
     const u = this.rand();
     const v = this.rand();
@@ -92,7 +82,7 @@ export class RainSim {
     if (u < p.largeShare) dH = lerp(p.mediumMax, p.largeMax, v);
     else if (u < p.largeShare + p.smallShare) dH = lerp(p.smallMin, p.smallMax, v);
     else dH = lerp(p.mediumMin, p.mediumMax, v);
-    return dH * H * p.sizeScale * sizeMul;
+    return dH * H * p.sizeScale;
   }
 
   pickPosition(p) {
@@ -104,7 +94,7 @@ export class RainSim {
     return [this.rand() * width, this.rand() * height];
   }
 
-  spawn(p, drive) {
+  spawn(p) {
     const cap = this.time < INTRO_SECONDS ? p.introCoverage : p.maxCoverage;
     let cov = this.coverage();
     const tb = this.layout.textBox;
@@ -113,44 +103,29 @@ export class RainSim {
       const a = Math.PI * (diam / 2) ** 2;
       if (cov + a / textArea > cap) return;
       const [x, y] = this.pickPosition(p);
-      this.addDrop(x, y, diam, p);
+      this.addDrop(x, y, diam);
       cov += a / textArea;
     };
 
-    this.spawnAcc += (p.spawnRate * (drive.baseMul ?? 1) + drive.rate) * this.dt;
-    while (this.spawnAcc >= 1) { this.spawnAcc -= 1; tryAdd(this.pickDiameter(p, drive.sizeMul)); }
-
-    this.fineAcc += drive.fine * this.dt;
-    while (this.fineAcc >= 1) {
-      this.fineAcc -= 1;
-      tryAdd(this.layout.H * p.smallMin * lerp(0.45, 1, this.rand()) * p.sizeScale);
-    }
-
-    for (let i = 0; i < drive.burst; i++) {
-      tryAdd(this.layout.H * lerp(p.mediumMin, p.mediumMax, this.rand()) * p.sizeScale * drive.sizeMul);
-    }
+    this.spawnAcc += p.spawnRate * this.dt;
+    while (this.spawnAcc >= 1) { this.spawnAcc -= 1; tryAdd(this.pickDiameter(p)); }
   }
 
-  update(dt, p, drive = quietDrive) {
+  update(dt, p) {
     dt = Math.min(dt, 0.1); // never jump more than 100 ms (tab switches)
     this.dt = dt;
     this.time += dt;
     const { H, height } = this.layout;
     const slideDiam = p.slideAt * H;
 
-    this.spawn(p, drive);
+    this.spawn(p);
 
     for (const d of this.drops) {
-      d.wobble *= Math.exp(-dt * 5);
       const diam = d.r * 2;
       switch (d.state) {
         case 'rest': {
           d.r -= (p.evaporation * H / 60 / 2) * dt;
           if (diam >= slideDiam) { d.state = 'creep'; d.t = 0; }
-          else if (drive.slideBoost > 0 && diam >= slideDiam * 0.75 &&
-                   this.rand() < drive.slideBoost * p.lowSlide * 0.2 * dt) {
-            d.state = 'creep'; d.t = 0;
-          }
           break;
         }
         case 'creep': {
@@ -173,7 +148,7 @@ export class RainSim {
           break;
         }
         case 'slide': {
-          this.slide(d, dt, p, drive, slideDiam);
+          this.slide(d, dt, p, slideDiam);
           break;
         }
       }
@@ -189,15 +164,13 @@ export class RainSim {
 
     this.updateTrails(p);
 
-    for (const s of this.splashes) s.t += dt;
-    if (this.splashes.length) this.splashes = this.splashes.filter((s) => s.t < s.life);
   }
 
-  slide(d, dt, p, drive, slideDiam) {
+  slide(d, dt, p, slideDiam) {
     const H = this.layout.H;
     d.t += dt;
     const sizeFactor = Math.sqrt(Math.max(0.3, (d.r * 2) / slideDiam));
-    const target = d.target * p.slideSpeedScale * sizeFactor * (1 + drive.slideBoost * p.lowSlide * 0.5);
+    const target = d.target * p.slideSpeedScale * sizeFactor;
     d.vy += (target - d.vy) * Math.min(1, dt * 3);
     // Sideways wander: a damped random walk, bounded relative to fall speed.
     d.vx += (this.rand() - 0.5) * p.wander * H * 12 * dt;
@@ -218,8 +191,7 @@ export class RainSim {
       const ra = Math.PI * (rd / 2) ** 2;
       if (ra < area * 0.25) {
         area -= ra;
-        const residue = this.addDrop(d.x + (this.rand() - 0.5) * d.r * 0.6, d.y - d.r * 1.1, rd, p, { splash: false });
-        residue.wobble = 0;
+        const residue = this.addDrop(d.x + (this.rand() - 0.5) * d.r * 0.6, d.y - d.r * 1.1, rd);
         residue.noMergeWith = d.id; // do not get re-absorbed immediately
       }
     }
@@ -311,7 +283,6 @@ export class RainSim {
     big.vx = (big.vx * A1 + small.vx * A2) / A;
     big.vy = (big.vy * A1 + small.vy * A2) / A;
     big.r = Math.sqrt(A);
-    big.wobble = Math.min(1, big.wobble + 0.5 + A2 / A);
     if (small.state === 'slide' && big.state !== 'slide') {
       // A falling drop that hits a resting one carries it along.
       big.state = 'slide';
