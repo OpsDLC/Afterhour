@@ -191,50 +191,140 @@
           </div>
 
           <div role="tabpanel" id="tp-rain" aria-labelledby="tab-rain" hidden>
-            <section class="group" aria-labelledby="g-glass">
+            <!-- H4N-39 · R1 "Specimen tiles": the view is chosen from real rendered samples -->
+            <section class="group rain-group" aria-labelledby="g-glass">
               <h2 id="g-glass" class="group-title">Glass</h2>
-              <div class="segmented" role="radiogroup" aria-label="View">
-                <label title="The glass refracts the type"
-                  ><input type="radio" name="rain-view" value="lens" checked />Lens</label
-                >
-                <label title="Water that touches ink joins the ink"
-                  ><input type="radio" name="rain-view" value="fusion" />Fusion</label
-                >
-              </div>
-              <div class="field">
-                <label for="rain-amount">Rain</label>
-                <input type="range" id="rain-amount" min="0" max="100" step="1" value="60" />
-                <output for="rain-amount">60</output>
-              </div>
-              <div class="field">
-                <label for="rain-seed">Seed</label>
-                <input type="number" id="rain-seed" min="1" max="2147483646" step="1" value="11" />
-                <button type="button" id="rain-reseed" class="text-button">New</button>
+              <div class="view-tiles" role="radiogroup" aria-labelledby="g-glass">
+                <label class="view-tile" title="The glass refracts the type">
+                  <input type="radio" name="rain-view" value="lens" checked />
+                  <canvas
+                    class="view-sample"
+                    data-view="lens"
+                    width="264"
+                    height="150"
+                    aria-hidden="true"
+                  ></canvas>
+                  <span class="view-name">Lens <kbd>1</kbd></span>
+                </label>
+                <label class="view-tile" title="Water that touches ink joins the ink">
+                  <input type="radio" name="rain-view" value="fusion" />
+                  <canvas
+                    class="view-sample"
+                    data-view="fusion"
+                    width="264"
+                    height="150"
+                    aria-hidden="true"
+                  ></canvas>
+                  <span class="view-name">Fusion <kbd>2</kbd></span>
+                </label>
               </div>
             </section>
-            <section class="group" aria-labelledby="g-transport">
-              <h2 id="g-transport" class="group-title">Time</h2>
+            <section class="group rain-group" aria-labelledby="g-rain">
+              <div class="readout">
+                <h2 id="g-rain" class="group-title"><label for="rain-amount">Rain</label></h2>
+                <output for="rain-amount" class="big-number">60</output>
+              </div>
+              <div class="scale">
+                <input
+                  type="range"
+                  id="rain-amount"
+                  class="hairline-range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="60"
+                />
+                <div class="scale-ticks" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div class="scale-words" aria-hidden="true">
+                  <span>Drizzle</span><span>Shower</span><span>Downpour</span>
+                </div>
+              </div>
+              <div class="seed-row">
+                <label for="rain-seed">Seed</label>
+                <input
+                  type="number"
+                  id="rain-seed"
+                  class="underline-number"
+                  min="1"
+                  max="2147483646"
+                  step="1"
+                  value="11"
+                />
+                <button
+                  type="button"
+                  id="rain-reseed"
+                  class="icon-button"
+                  title="New seed"
+                  aria-label="New seed"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+                    <path d="M20 4v5h-5" />
+                  </svg>
+                </button>
+              </div>
+            </section>
+            <section class="group rain-group" aria-labelledby="g-time">
+              <div class="readout">
+                <h2 id="g-time" class="group-title">Time</h2>
+                <output id="rain-drops" class="small-stat"></output>
+              </div>
+              <output id="rain-clock" class="clock">00:00<span>.0</span></output>
               <div class="transport">
                 <button
                   type="button"
                   id="rain-play"
-                  class="text-button"
+                  class="transport-button"
                   aria-pressed="true"
-                  title="Play / pause · K"
+                  aria-label="Pause"
+                  title="Pause · K"
                 >
-                  Pause
+                  <svg
+                    class="i-pause"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    aria-hidden="true"
+                  >
+                    <rect x="2.5" y="2" width="3" height="10" fill="currentColor" />
+                    <rect x="8.5" y="2" width="3" height="10" fill="currentColor" />
+                  </svg>
+                  <svg class="i-play" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                    <path d="M3.5 2l8 5-8 5z" fill="currentColor" />
+                  </svg>
                 </button>
                 <button
                   type="button"
                   id="rain-restart"
-                  class="text-button"
-                  title="Start again on dry glass"
+                  class="transport-button"
+                  aria-label="Restart on dry glass"
+                  title="Restart on dry glass · Shift R"
                 >
-                  Restart
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 12a8 8 0 1 0 2.34-5.66" />
+                    <path d="M4 4v5h5" />
+                  </svg>
                 </button>
-                <output id="rain-clock" class="rain-clock"></output>
+                <span class="key-hints"><kbd>K</kbd> play <kbd>⇧R</kbd> restart</span>
               </div>
-              <p class="hint">The rain falls while this tab is open. K plays and pauses.</p>
             </section>
           </div>
 

@@ -15,6 +15,7 @@ export interface FrameMessage {
   height: number;
   t: number;
   drops: number;
+  sliding: number;
 }
 
 const STEP = 1 / 30; // the engine's fixed step (as approved in the prototype)
@@ -56,6 +57,7 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
       height: sim.height,
       t,
       drops: sim.drops.length,
+      sliding: sim.drops.filter((d) => d.moving).length,
     };
     (self as unknown as Worker).postMessage(msg, [out.buffer]);
   }

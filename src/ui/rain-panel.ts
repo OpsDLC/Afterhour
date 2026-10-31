@@ -1,4 +1,5 @@
 import { getFontState, subscribe } from '../fonts/state';
+import { inkMaps, RainSim, renderFusion, renderLens } from '../rain/index.ts';
 import type { FrameMessage, ToWorker, View } from '../rain/worker';
 import type { Settings } from '../settings';
 import { getZoom, setLabelExtra } from './artboard';
@@ -16,6 +17,8 @@ const reseed = document.getElementById('rain-reseed')!;
 const play = document.getElementById('rain-play')!;
 const restart = document.getElementById('rain-restart')!;
 const clock = document.getElementById('rain-clock') as HTMLOutputElement;
+const dropsOut = document.getElementById('rain-drops') as HTMLOutputElement;
+const samples = Array.from(document.querySelectorAll<HTMLCanvasElement>('canvas.view-sample'));
 const viewRadios = Array.from(
   document.querySelectorAll<HTMLInputElement>('input[name="rain-view"]'),
 );
@@ -28,6 +31,46 @@ const ctx = canvas.getContext('2d')!;
 
 const worker = new Worker(new URL('../rain/worker.ts', import.meta.url), { type: 'module' });
 const send = (m: ToWorker, transfer: Transferable[] = []) => worker.postMessage(m, transfer);
+
+const grouped = new Intl.NumberFormat('en-GB');
+
+/** 12.4 s → "00:12" + ".4" (the tenth is set lighter). */
+function setClock(t: number): void {
+  const tenths = Math.floor(t * 10);
+  const m = Math.floor(tenths / 600),
+    sec = Math.floor(tenths / 10) % 60;
+  clock.innerHTML = `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}<span>.${tenths % 10}</span>`;
+}
+
+/**
+ * The view tiles show "Aa" in the current font, rained on by the real engine (fixed seed), so the
+ * choice is made by looking at the result. Small enough to render on the main thread.
+ */
+function renderSamples(family: string, weight: number): void {
+  const [first] = samples;
+  if (!first) return;
+  const W = first.width,
+    H = first.height;
+  const off = new OffscreenCanvas(W, H);
+  const c = off.getContext('2d')!;
+  c.fillStyle = '#fff';
+  c.fillRect(0, 0, W, H);
+  c.fillStyle = '#000';
+  c.font = `${weight} 112px "${family}", serif`;
+  c.textAlign = 'center';
+  c.fillText('Aa', W / 2, H * 0.74);
+  const page = { width: W, height: H, rgba: c.getImageData(0, 0, W, H).data };
+  const sim = new RainSim({ width: W, height: H, seed: 4 });
+  let t = 0;
+  for (let i = 0; i < 170; i++) sim.step(1 / 30, 0.6, (t += 1 / 30));
+  const maps = inkMaps(page);
+  for (const canvas of samples) {
+    const out = new Uint8ClampedArray(W * H * 4);
+    if (canvas.dataset.view === 'lens') renderLens(sim, page, t, out);
+    else renderFusion(sim, maps, t, out);
+    canvas.getContext('2d')!.putImageData(new ImageData(out, W, H), 0, 0);
+  }
+}
 
 /** True while the user is typing text (radios, sliders and buttons don't count). */
 const typing = (el: EventTarget | null) =>
@@ -127,7 +170,8 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
       );
       board.classList.add('raining');
     }
-    clock.value = `${m.t.toFixed(1)} s  ·  ${m.drops} drops`;
+    setClock(m.t);
+    dropsOut.value = `${grouped.format(m.drops)} drops · ${m.sliding} sliding`;
   };
 
   function tick(now: number): void {
@@ -152,6 +196,7 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
     board.classList.toggle('raining', false);
     label();
     if (on) {
+      refreshSamples();
       if (!size.w) reset();
       pageDirty = true;
       last = 0;
@@ -162,7 +207,25 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
   const setPlaying = (on: boolean) => {
     playing = on;
     play.setAttribute('aria-pressed', String(on));
-    play.textContent = on ? 'Pause' : 'Play';
+    play.setAttribute('aria-label', on ? 'Pause' : 'Play');
+    play.title = `${on ? 'Pause' : 'Play'} · K`;
+  };
+  const setView = (v: View) => {
+    view = v;
+    for (const r of viewRadios) r.checked = r.value === v;
+    label();
+  };
+  const showAmount = () => {
+    amountOut.value = amount.value;
+    amount.style.setProperty('--value', `${amount.value}%`);
+  };
+  showAmount();
+  let samplesFor = '';
+  const refreshSamples = () => {
+    const key = `${getFontState().current.family}|${settings.fontWeight}`;
+    if (!active || key === samplesFor) return;
+    samplesFor = key;
+    renderSamples(getFontState().current.family, settings.fontWeight);
   };
 
   // the panel's hidden attribute is the tab state (tabs.ts stays generic)
@@ -172,14 +235,10 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
   });
 
   amount.addEventListener('input', () => {
-    amountOut.value = amount.value;
+    showAmount();
     label();
   });
-  for (const r of viewRadios)
-    r.addEventListener('change', () => {
-      view = r.value as View;
-      label();
-    });
+  for (const r of viewRadios) r.addEventListener('change', () => setView(r.value as View));
   const applySeed = (value: number) => {
     seed = Math.max(1, Math.min(2147483646, Math.round(value) || 1));
     seedInput.value = String(seed);
@@ -190,21 +249,31 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
   reseed.addEventListener('click', () => applySeed(1 + Math.floor(Math.random() * 99999)));
   play.addEventListener('click', () => setPlaying(!playing));
   restart.addEventListener('click', reset);
+  // keys while the Rain tab is open: K play/pause, 1/2 view, Shift+R restart
   window.addEventListener('keydown', (e) => {
-    if (
-      !active ||
-      e.key.toLowerCase() !== 'k' ||
-      e.metaKey ||
-      e.ctrlKey ||
-      e.altKey ||
-      typing(e.target)
-    )
-      return;
+    if (!active || e.metaKey || e.ctrlKey || e.altKey || e.repeat || typing(e.target)) return;
+    const key = e.key.toLowerCase();
+    if (key === 'k') setPlaying(!playing);
+    else if (e.key === '1') setView('lens');
+    else if (e.key === '2') setView('fusion');
+    else if (key === 'r' && e.shiftKey) reset();
+    else return;
     e.preventDefault();
-    setPlaying(!playing);
   });
-  subscribe(() => (pageDirty = true));
-  void document.fonts.ready.then(() => (pageDirty = true));
+  subscribe(() => {
+    pageDirty = true;
+    refreshSamples();
+  });
+  void document.fonts.ready.then(() => {
+    pageDirty = true;
+    samplesFor = '';
+    refreshSamples();
+  });
 
-  return { pageChanged: () => (pageDirty = true) };
+  return {
+    pageChanged: () => {
+      pageDirty = true;
+      refreshSamples();
+    },
+  };
 }
