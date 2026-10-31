@@ -6,7 +6,108 @@
     <title>Afterhour</title>
   </head>
   <body>
-    <h1 class="title">Afterhour</h1>
+    <div class="small-screen" role="alert">
+      <p>Afterhour needs a desktop browser.</p>
+      <button type="button" id="open-anyway">Open anyway</button>
+    </div>
+
+    <div class="app" id="app">
+      <aside id="panel" aria-label="Controls">
+        <header class="panel-header">
+          <h1 class="brand">Afterhour</h1>
+          <button
+            type="button"
+            id="panel-toggle"
+            class="icon-button"
+            aria-controls="panel-body"
+            aria-expanded="true"
+            aria-label="Hide controls"
+          >
+            «
+          </button>
+        </header>
+
+        <div id="panel-body">
+          <section class="group" aria-labelledby="g-text">
+            <h2 id="g-text" class="group-title">Text</h2>
+            <p class="placeholder">Text input (H4N-13)</p>
+          </section>
+
+          <div class="tabs" role="tablist" aria-label="Control groups">
+            <button
+              type="button"
+              role="tab"
+              id="tab-type"
+              aria-controls="tp-type"
+              aria-selected="true"
+            >
+              Type
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-layout"
+              aria-controls="tp-layout"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Layout
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-rain"
+              aria-controls="tp-rain"
+              aria-selected="false"
+              tabindex="-1"
+              aria-disabled="true"
+              title="Sprint 2"
+            >
+              Rain
+            </button>
+          </div>
+
+          <div role="tabpanel" id="tp-type" aria-labelledby="tab-type">
+            <section class="group" aria-labelledby="g-font">
+              <h2 id="g-font" class="group-title">Font</h2>
+              <p class="placeholder">Google Fonts picker and upload (H4N-21)</p>
+            </section>
+            <section class="group" aria-labelledby="g-size">
+              <h2 id="g-size" class="group-title">Size</h2>
+              <p class="placeholder">Weight and size (H4N-14)</p>
+            </section>
+          </div>
+
+          <div role="tabpanel" id="tp-layout" aria-labelledby="tab-layout" hidden>
+            <section class="group" aria-labelledby="g-spacing">
+              <h2 id="g-spacing" class="group-title">Spacing</h2>
+              <p class="placeholder">Tracking, line height, width (H4N-15)</p>
+            </section>
+            <section class="group" aria-labelledby="g-align">
+              <h2 id="g-align" class="group-title">Alignment</h2>
+              <p class="placeholder">Left / Center / Right (H4N-15)</p>
+            </section>
+          </div>
+
+          <div role="tabpanel" id="tp-rain" aria-labelledby="tab-rain" hidden></div>
+        </div>
+      </aside>
+
+      <main id="preview">
+        <button
+          type="button"
+          id="panel-show"
+          class="icon-button"
+          aria-controls="panel"
+          aria-label="Show controls"
+          hidden
+        >
+          »
+        </button>
+        <p class="preview-text">Afterhour</p>
+      </main>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
