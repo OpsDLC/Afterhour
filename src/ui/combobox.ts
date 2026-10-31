@@ -8,6 +8,8 @@ export interface ComboboxOptions<T> {
   /** Fills an option element for an item. */
   renderItem: (item: T, li: HTMLLIElement) => void;
   onSelect: (item: T) => void;
+  /** Optional section heading for an item; a heading is shown whenever it changes. */
+  group?: (item: T) => string;
   /** Maximum options rendered at once. */
   limit?: number;
 }
@@ -43,16 +45,26 @@ export function initCombobox<T>(opts: ComboboxOptions<T>): void {
     const found = await opts.search(input.value.trim());
     if (id !== query) return;
     items = found.slice(0, limit);
-    list.replaceChildren(
-      ...items.map((item, i) => {
-        const li = document.createElement('li');
-        li.id = `${list.id}-${i}`;
-        li.setAttribute('role', 'option');
-        li.setAttribute('aria-selected', 'false');
-        opts.renderItem(item, li);
-        return li;
-      }),
-    );
+    const rows: HTMLLIElement[] = [];
+    let heading: string | undefined;
+    items.forEach((item, i) => {
+      const group = opts.group?.(item);
+      if (group !== undefined && group !== heading) {
+        heading = group;
+        const h = document.createElement('li');
+        h.className = 'combo-group';
+        h.setAttribute('role', 'presentation');
+        h.textContent = group;
+        rows.push(h);
+      }
+      const li = document.createElement('li');
+      li.id = `${list.id}-${i}`;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', 'false');
+      opts.renderItem(item, li);
+      rows.push(li);
+    });
+    list.replaceChildren(...rows);
     if (found.length > limit) {
       const more = document.createElement('li');
       more.className = 'combo-more';

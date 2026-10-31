@@ -1,4 +1,5 @@
-import { googleFonts, loadGoogleFont, previewFamily, type GoogleFont } from '../fonts/google';
+import { searchFonts, type CatalogFont } from '../fonts/catalog';
+import { loadGoogleFont, previewFamily } from '../fonts/google';
 import { loadLocalFont } from '../fonts/local';
 import { getFontState, subscribe, switchFont } from '../fonts/state';
 import { initCombobox } from './combobox';
@@ -9,19 +10,13 @@ const current = document.getElementById('font-current')!;
 const error = document.getElementById('font-error')!;
 const fileInput = document.getElementById('font-file') as HTMLInputElement;
 
-function matches(fonts: GoogleFont[], query: string): GoogleFont[] {
-  const q = query.toLowerCase();
-  if (!q) return fonts;
-  const starts = fonts.filter((f) => f.family.toLowerCase().startsWith(q));
-  const contains = fonts.filter((f) => !starts.includes(f) && f.family.toLowerCase().includes(q));
-  return [...starts, ...contains];
-}
-
 function uploadFile(file: File): void {
   void switchFont(file.name, () => loadLocalFont(file));
 }
 
-const fontOf = new WeakMap<Element, GoogleFont>();
+const SOURCE_LABEL = { google: 'Google Fonts', system: 'system font', local: 'uploaded file' };
+
+const fontOf = new WeakMap<Element, CatalogFont>();
 
 export function initFontPanel(): void {
   // Names are drawn in their own typeface only once they scroll into view.
@@ -30,17 +25,20 @@ export function initFontPanel(): void {
       for (const { target, isIntersecting } of entries) {
         if (!isIntersecting) continue;
         const el = target as HTMLElement;
-        el.style.fontFamily = `"${previewFamily(fontOf.get(el)!)}", var(--ui-font)`;
+        const font = fontOf.get(el)!;
+        const family = font.source === 'system' ? font.family : previewFamily(font);
+        el.style.fontFamily = `"${family}", var(--ui-font)`;
         seen.unobserve(el);
       }
     },
     { root: list },
   );
 
-  initCombobox<GoogleFont>({
+  initCombobox<CatalogFont>({
     input: search,
     list,
-    search: async (q) => matches(await googleFonts(), q),
+    search: searchFonts,
+    group: (font) => font.group,
     renderItem: (font, li) => {
       const name = document.createElement('span');
       name.textContent = font.family;
@@ -50,7 +48,12 @@ export function initFontPanel(): void {
       li.append(name, category);
       seen.observe(name);
     },
-    onSelect: (font) => void switchFont(font.family, () => loadGoogleFont(font)),
+    onSelect: (font) =>
+      void switchFont(font.family, async () =>
+        font.source === 'system'
+          ? { name: font.family, family: font.family, source: 'system', weights: font.weights }
+          : loadGoogleFont(font),
+      ),
   });
 
   fileInput.addEventListener('change', () => {
@@ -80,7 +83,7 @@ export function initFontPanel(): void {
     const { current: font, loading, error: message } = getFontState();
     current.textContent = loading
       ? `Loading ${loading}…`
-      : `${font.name} · ${font.source === 'google' ? 'Google Fonts' : 'uploaded file'}`;
+      : `${font.name} · ${SOURCE_LABEL[font.source]}`;
     error.hidden = !message;
     error.textContent = message ?? '';
   };

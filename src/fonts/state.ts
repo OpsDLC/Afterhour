@@ -1,5 +1,5 @@
 // The single source of truth for the current font. Every control and renderer reads it here.
-export type FontSource = 'google' | 'local';
+export type FontSource = 'google' | 'system' | 'local';
 
 export interface FontInfo {
   /** Name shown to the user. */

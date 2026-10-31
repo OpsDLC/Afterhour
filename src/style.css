@@ -180,6 +180,15 @@ button {
   padding: 6px 10px;
 }
 
+.combo-group {
+  padding: 10px 10px 4px;
+  font-family: var(--ui-font);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
 #font-list [aria-selected='true'] {
   background: color-mix(in srgb, var(--text) 8%, transparent);
   box-shadow: inset 2px 0 var(--accent);
