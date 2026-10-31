@@ -432,7 +432,7 @@ output {
   color: var(--bg);
 }
 
-.preview-block.blurred .preview-text {
+.preview-block.squinting .preview-text {
   filter: blur(0.08em);
 }
 

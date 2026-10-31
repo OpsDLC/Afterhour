@@ -11,7 +11,7 @@ import {
 } from './settings';
 import { initFontPanel } from './ui/font-panel';
 import { initLayoutControls } from './ui/layout-controls';
-import { initBlurView, updateMeasure } from './ui/measure';
+import { initSquintView, updateMeasure } from './ui/measure';
 import { initPreviewGestures } from './ui/preview-gestures';
 import { initTabs } from './ui/tabs';
 import { initTypeControls } from './ui/type-controls';
@@ -39,7 +39,7 @@ const syncAll = () => {
 
 initFontPanel();
 syncControls = [initTypeControls(settings, syncAll), initLayoutControls(settings, syncAll)];
-initBlurView();
+initSquintView();
 syncAll();
 new ResizeObserver(() => updateMeasure(settings)).observe(
   document.getElementById('preview-block')!,

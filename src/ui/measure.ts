@@ -22,15 +22,15 @@ export function updateMeasure(settings: Settings): void {
 }
 
 /**
- * Blur view: blurs the preview so only the texture of the text block is left. The corner
- * button toggles it; holding B shows it until the key is released.
+ * Squint view: blurs the preview so only the texture (typographic colour) of the text block is
+ * left. The corner button toggles it; holding B shows it until the key is released.
  */
-export function initBlurView(): void {
-  const button = document.getElementById('blur-view')!;
+export function initSquintView(): void {
+  const button = document.getElementById('squint-view')!;
   let pinned = false;
   const show = (on: boolean) => {
     button.setAttribute('aria-pressed', String(on));
-    block.classList.toggle('blurred', on);
+    block.classList.toggle('squinting', on);
   };
   button.addEventListener('click', () => show((pinned = !pinned)));
 
