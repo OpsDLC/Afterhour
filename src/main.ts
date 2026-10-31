@@ -1,9 +1,10 @@
 import './style.css';
 import { loadGoogleFont } from './fonts/google';
-import { switchFont } from './fonts/state';
+import { getFontState, switchFont } from './fonts/state';
 import { render } from './render';
-import { DEFAULT_SETTINGS, DEFAULT_TEXT, type Settings } from './settings';
+import { DEFAULT_SETTINGS, DEFAULT_TEXT, nearestWeight, type Settings } from './settings';
 import { initFontPanel } from './ui/font-panel';
+import { initLayoutControls } from './ui/layout-controls';
 import { initTabs } from './ui/tabs';
 import { initTypeControls } from './ui/type-controls';
 
@@ -13,12 +14,22 @@ const show = document.getElementById('panel-show')!;
 
 const settings: Settings = { ...DEFAULT_SETTINGS };
 const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
+const update = () => render(textInput.value, settings);
 textInput.value = DEFAULT_TEXT;
-textInput.addEventListener('input', () => render(textInput.value, settings));
-render(textInput.value, settings);
+textInput.addEventListener('input', update);
+update();
 
 initFontPanel();
-initTypeControls(settings, () => render(textInput.value, settings));
+const syncControls = [initTypeControls(settings, update), initLayoutControls(settings, update)];
+
+// Reset restores every setting (the text stays), keeping the weight valid for the current font.
+document.getElementById('reset')!.addEventListener('click', () => {
+  Object.assign(settings, DEFAULT_SETTINGS);
+  settings.fontWeight = nearestWeight(getFontState().current.weights, settings.fontWeight);
+  for (const sync of syncControls) sync();
+  update();
+});
+
 void switchFont('Instrument Serif', () =>
   loadGoogleFont({ family: 'Instrument Serif', weights: [400] }),
 );

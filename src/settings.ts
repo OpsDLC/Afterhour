@@ -1,15 +1,28 @@
 export const DEFAULT_TEXT = 'Afterhour\nthe rain keeps the letters awake';
 
 // Every typographic setting lives here. JSON-serialisable.
+export type Align = 'left' | 'center' | 'right';
+
 export interface Settings {
   fontWeight: number;
   /** px */
   fontSize: number;
+  /** em */
+  letterSpacing: number;
+  /** multiple of the font size */
+  lineHeight: number;
+  align: Align;
+  /** % of the preview width */
+  maxWidth: number;
 }
 
-export const DEFAULT_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS: Readonly<Settings> = {
   fontWeight: 400,
   fontSize: 64,
+  letterSpacing: 0,
+  lineHeight: 1.2,
+  align: 'left',
+  maxWidth: 80,
 };
 
 export const FONT_SIZE = { min: 12, max: 240 };

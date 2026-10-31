@@ -126,15 +126,37 @@
           <div role="tabpanel" id="tp-layout" aria-labelledby="tab-layout" hidden>
             <section class="group" aria-labelledby="g-spacing">
               <h2 id="g-spacing" class="group-title">Spacing</h2>
-              <p class="placeholder">Tracking, line height, width (H4N-15)</p>
+              <div class="field">
+                <label for="letter-spacing">Tracking</label>
+                <input type="range" id="letter-spacing" min="-0.05" max="0.5" step="0.005" />
+                <output for="letter-spacing"></output>
+              </div>
+              <div class="field">
+                <label for="line-height">Line height</label>
+                <input type="range" id="line-height" min="0.8" max="2.5" step="0.05" />
+                <output for="line-height"></output>
+              </div>
+              <div class="field">
+                <label for="max-width">Width</label>
+                <input type="range" id="max-width" min="20" max="100" step="1" />
+                <output for="max-width"></output>
+              </div>
             </section>
             <section class="group" aria-labelledby="g-align">
               <h2 id="g-align" class="group-title">Alignment</h2>
-              <p class="placeholder">Left / Center / Right (H4N-15)</p>
+              <div class="segmented" role="radiogroup" aria-labelledby="g-align">
+                <label><input type="radio" name="align" value="left" />Left</label>
+                <label><input type="radio" name="align" value="center" />Center</label>
+                <label><input type="radio" name="align" value="right" />Right</label>
+              </div>
             </section>
           </div>
 
           <div role="tabpanel" id="tp-rain" aria-labelledby="tab-rain" hidden></div>
+
+          <div class="group">
+            <button type="button" id="reset" class="text-button">Reset to defaults</button>
+          </div>
         </div>
       </aside>
 
