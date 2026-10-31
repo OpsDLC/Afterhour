@@ -69,8 +69,27 @@
 
           <div role="tabpanel" id="tp-type" aria-labelledby="tab-type">
             <section class="group" aria-labelledby="g-font">
-              <h2 id="g-font" class="group-title">Font</h2>
-              <p class="placeholder">Google Fonts picker and upload (H4N-21)</p>
+              <h2 class="group-title"><label for="font-search" id="g-font">Font</label></h2>
+              <p class="font-current" id="font-current" aria-live="polite"></p>
+              <div class="combo">
+                <input
+                  id="font-search"
+                  type="text"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-controls="font-list"
+                  aria-autocomplete="list"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Search fonts"
+                />
+                <ul id="font-list" role="listbox" aria-label="Fonts" hidden></ul>
+              </div>
+              <label class="upload">
+                <input type="file" id="font-file" accept=".ttf,.otf,.woff,.woff2" />
+                Upload a font file (.ttf .otf .woff .woff2) or drop it anywhere
+              </label>
+              <p class="error" id="font-error" role="alert" hidden></p>
             </section>
             <section class="group" aria-labelledby="g-size">
               <h2 id="g-size" class="group-title">Size</h2>

@@ -1,3 +1,4 @@
+import { getFontState } from './fonts/state';
 import type { Settings } from './settings';
 
 const out = document.getElementById('preview-text')!;
@@ -7,4 +8,5 @@ export function render(text: string, _settings: Settings): void {
   const empty = text.length === 0;
   out.textContent = empty ? 'Type something…' : text;
   out.classList.toggle('is-empty', empty);
+  out.style.fontFamily = `"${getFontState().current.family}", var(--ui-font)`;
 }

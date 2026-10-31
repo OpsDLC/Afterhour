@@ -1,6 +1,9 @@
 import './style.css';
+import { loadGoogleFont } from './fonts/google';
+import { subscribe, switchFont } from './fonts/state';
 import { render } from './render';
 import { DEFAULT_SETTINGS, DEFAULT_TEXT } from './settings';
+import { initFontPanel } from './ui/font-panel';
 import { initTabs } from './ui/tabs';
 
 const app = document.getElementById('app')!;
@@ -12,6 +15,12 @@ const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
 textInput.value = DEFAULT_TEXT;
 textInput.addEventListener('input', () => render(textInput.value, settings));
 render(textInput.value, settings);
+
+initFontPanel();
+subscribe(() => render(textInput.value, settings));
+void switchFont('Instrument Serif', () =>
+  loadGoogleFont({ family: 'Instrument Serif', weights: [400] }),
+);
 
 initTabs(document.querySelector<HTMLElement>('[role="tablist"]')!);
 
