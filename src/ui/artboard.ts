@@ -23,6 +23,13 @@ let zoom = 1;
 let rulersOn = false;
 let pointer: { x: number; y: number } | null = null; // in artboard px, for the ruler markers
 let current = { w: 0, h: 0 };
+let extra = '';
+
+/** Extra facts for the label under the artboard (e.g. seed and rain amount while it rains). */
+export function setLabelExtra(text: string): void {
+  extra = text;
+  layout();
+}
 
 /** Screen px per artboard px. */
 export const getZoom = () => zoom;
@@ -33,15 +40,15 @@ const css = (name: string) =>
 function layout(): void {
   const { w, h } = current;
   if (!w) return;
-  const extra = rulersOn ? RULER + RULER_GAP : 0;
-  const availW = pasteboard.clientWidth - MARGIN.left - MARGIN.right - extra;
-  const availH = pasteboard.clientHeight - MARGIN.top - MARGIN.bottom - extra;
+  const space = rulersOn ? RULER + RULER_GAP : 0;
+  const availW = pasteboard.clientWidth - MARGIN.left - MARGIN.right - space;
+  const availH = pasteboard.clientHeight - MARGIN.top - MARGIN.bottom - space;
   zoom = Math.max(0.05, Math.min(1, availW / w, availH / h));
   const sw = w * zoom,
     sh = h * zoom;
   // centre in the space left after the rulers
-  const left = Math.round(MARGIN.left + extra + (availW - sw) / 2);
-  const top = Math.round(MARGIN.top + extra + (availH - sh) / 2);
+  const left = Math.round(MARGIN.left + space + (availW - sw) / 2);
+  const top = Math.round(MARGIN.top + space + (availH - sh) / 2);
   Object.assign(frame.style, {
     left: `${left}px`,
     top: `${top}px`,
@@ -49,7 +56,7 @@ function layout(): void {
     height: `${sh}px`,
   });
   Object.assign(board.style, { width: `${w}px`, height: `${h}px`, transform: `scale(${zoom})` });
-  label.textContent = `${w} × ${h} px  ·  ${Math.round(zoom * 100)}%`;
+  label.textContent = `${w} × ${h} px  ·  ${Math.round(zoom * 100)}%${extra ? `  ·  ${extra}` : ''}`;
   drawRulers();
 }
 
