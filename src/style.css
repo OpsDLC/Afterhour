@@ -5,6 +5,7 @@
   --line: color-mix(in srgb, var(--text) 14%, transparent);
   --dim: color-mix(in srgb, var(--text) 55%, transparent);
   --panel-width: 320px;
+  --ui-font: 'New York', 'Instrument Serif', Georgia, serif;
 }
 
 *,
@@ -19,7 +20,7 @@ body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'New York', 'Instrument Serif', Georgia, serif;
+  font-family: var(--ui-font);
   font-weight: 300;
 }
 
@@ -114,6 +115,110 @@ button {
   font: inherit;
   font-size: 14px;
   line-height: 1.4;
+}
+
+.font-current {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.combo {
+  position: relative;
+}
+
+#font-search {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+#font-list {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+#font-list [role='option'] {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+#font-list [role='option'] span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#font-list [role='option'] small,
+.combo-more {
+  font-family: var(--ui-font);
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.combo-more {
+  padding: 6px 10px;
+}
+
+#font-list [aria-selected='true'] {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  box-shadow: inset 2px 0 var(--accent);
+}
+
+.upload {
+  display: block;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.upload:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.upload input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.error {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text);
+  border-left: 2px solid var(--text);
+  padding-left: 8px;
+}
+
+.app.dropping #preview {
+  outline: 1px dashed var(--text);
+  outline-offset: -12px;
 }
 
 .tabs {
