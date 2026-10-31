@@ -2,6 +2,8 @@
 
 A web typography tool: bring a font, type text, and (later) let night-rain droplets land on it. Static site for GitHub Pages; fonts never leave the browser.
 
+Decisions, core ideas and UI rules: **[HANDOFF.md](HANDOFF.md)**. Tasks: Jira project H4N.
+
 ## Prerequisites
 
 - Node.js 22 LTS or newer (see `.nvmrc`)
