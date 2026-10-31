@@ -118,12 +118,36 @@
             <section class="group" aria-labelledby="g-spacing">
               <h2 id="g-spacing" class="group-title">Spacing</h2>
               <div class="field">
-                <label for="letter-spacing">Tracking</label>
+                <div class="field-label">
+                  <label for="letter-spacing">Tracking</label>
+                  <button
+                    type="button"
+                    class="auto-toggle"
+                    data-auto-for="letter-spacing"
+                    aria-pressed="true"
+                    title="Follow the font size"
+                    aria-label="Automatic tracking from size"
+                  >
+                    Auto
+                  </button>
+                </div>
                 <input type="range" id="letter-spacing" min="-0.05" max="0.5" step="0.005" />
                 <output for="letter-spacing"></output>
               </div>
               <div class="field">
-                <label for="line-height">Line height</label>
+                <div class="field-label">
+                  <label for="line-height">Line height</label>
+                  <button
+                    type="button"
+                    class="auto-toggle"
+                    data-auto-for="line-height"
+                    aria-pressed="true"
+                    title="Follow the font size"
+                    aria-label="Automatic line height from size"
+                  >
+                    Auto
+                  </button>
+                </div>
                 <input type="range" id="line-height" min="0.8" max="2.5" step="0.05" />
                 <output for="line-height"></output>
               </div>
@@ -132,6 +156,7 @@
                 <input type="range" id="max-width" min="20" max="100" step="1" />
                 <output for="max-width"></output>
               </div>
+              <p class="measure" id="measure" aria-live="polite"></p>
             </section>
             <section class="group" aria-labelledby="g-align">
               <h2 id="g-align" class="group-title">Alignment</h2>
@@ -162,6 +187,27 @@
         >
           »
         </button>
+        <button
+          type="button"
+          id="squint-view"
+          class="icon-button view-toggle"
+          aria-pressed="false"
+          aria-label="Squint view (hold B)"
+          title="Squint view · hold B"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="8" stroke-dasharray="2 2.2" />
+            <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" opacity="0.6" />
+          </svg>
+        </button>
         <div class="preview-scroll" id="preview-scroll">
           <div class="preview-block" id="preview-block">
             <p class="preview-text" id="preview-text"></p>
@@ -171,7 +217,7 @@
         <div class="gesture-tip" id="gesture-tip" hidden></div>
         <p class="gesture-hint">
           Drag text: ↔ tracking · ↕ line height · Scroll or pinch: size · Drag edge: width ·
-          Double-click: edit · Shift fine · Alt one axis
+          Double-click: edit · Shift fine · Alt one axis · Hold B: squint
         </p>
       </main>
     </div>
