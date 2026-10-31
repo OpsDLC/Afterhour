@@ -158,6 +158,30 @@
               </div>
               <p class="measure" id="measure" aria-live="polite"></p>
             </section>
+            <section class="group" aria-labelledby="g-artboard">
+              <h2 id="g-artboard" class="group-title">Artboard</h2>
+              <div class="field artboard-size">
+                <label for="artboard-w">Size</label>
+                <input
+                  type="number"
+                  id="artboard-w"
+                  min="320"
+                  max="4096"
+                  step="1"
+                  aria-label="Artboard width in pixels"
+                />
+                <span class="unit" aria-hidden="true">×</span>
+                <input
+                  type="number"
+                  id="artboard-h"
+                  min="320"
+                  max="4096"
+                  step="1"
+                  aria-label="Artboard height in pixels"
+                />
+                <span class="unit">px</span>
+              </div>
+            </section>
             <section class="group" aria-labelledby="g-align">
               <h2 id="g-align" class="group-title">Alignment</h2>
               <div class="segmented" role="radiogroup" aria-labelledby="g-align">
@@ -208,10 +232,46 @@
             <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" opacity="0.6" />
           </svg>
         </button>
-        <div class="preview-scroll" id="preview-scroll">
-          <div class="preview-block" id="preview-block">
-            <p class="preview-text" id="preview-text"></p>
-            <div class="width-handle" id="width-handle" title="Drag to change the width"></div>
+        <button
+          type="button"
+          id="rulers-toggle"
+          class="icon-button view-toggle rulers-toggle"
+          aria-pressed="false"
+          aria-label="Rulers (Command or Control R)"
+          title="Rulers · ⌘R"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            aria-hidden="true"
+          >
+            <path d="M3 3h18v6H9v12H3z" />
+            <path d="M7 3v3M11 3v2M15 3v3M19 3v2M3 13h3M3 17h2" />
+          </svg>
+        </button>
+        <div class="pasteboard" id="pasteboard">
+          <canvas class="ruler ruler-x" id="ruler-x" aria-hidden="true" hidden></canvas>
+          <canvas class="ruler ruler-y" id="ruler-y" aria-hidden="true" hidden></canvas>
+          <div class="artboard-frame" id="artboard-frame">
+            <div class="artboard" id="artboard">
+              <div class="preview-scroll" id="preview-scroll">
+                <div class="preview-block" id="preview-block">
+                  <p class="preview-text" id="preview-text"></p>
+                  <div
+                    class="width-handle"
+                    id="width-handle"
+                    title="Drag to change the width"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i
+            ><i class="crop br"></i>
+            <p class="artboard-label" id="artboard-label"></p>
           </div>
         </div>
         <div class="gesture-tip" id="gesture-tip" hidden></div>

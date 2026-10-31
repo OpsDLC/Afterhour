@@ -14,8 +14,11 @@ export interface Settings {
   /** multiple of the font size */
   lineHeight: number;
   align: Align;
-  /** % of the preview width */
+  /** % of the artboard's inner width */
   maxWidth: number;
+  /** Artboard (the pane) in px. Type sizes are in the same px, so the preview matches the export. */
+  artboardWidth: number;
+  artboardHeight: number;
   /** Tracking follows the font size until it is set by hand. */
   autoTracking: boolean;
   /** Line height follows the font size until it is set by hand. */
@@ -29,6 +32,8 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   lineHeight: lineHeightForSize(64),
   align: 'left',
   maxWidth: 80,
+  artboardWidth: 1440,
+  artboardHeight: 900,
   autoTracking: true,
   autoLineHeight: true,
 };
@@ -47,6 +52,7 @@ export const LIMITS = {
   letterSpacing: { min: -0.05, max: 0.5 },
   lineHeight: { min: 0.8, max: 2.5 },
   maxWidth: { min: 20, max: 100 },
+  artboard: { min: 320, max: 4096 },
 };
 
 export const clamp = (value: number, min: number, max: number) =>
