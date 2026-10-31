@@ -16,6 +16,8 @@ export interface ComboboxOptions<T> {
 
 export function initCombobox<T>(opts: ComboboxOptions<T>): void {
   const { input, list, limit = 80 } = opts;
+  // Browsers make scrollable lists tab stops; the input owns focus here, so keep the list out.
+  list.tabIndex = -1;
   let items: T[] = [];
   let active = -1;
   let query = 0;
