@@ -1,0 +1,27 @@
+:root {
+  --bg: #14161a;
+  --text: #e8e4dc;
+  --accent: #e9b872;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'New York', 'Instrument Serif', Georgia, serif;
+  font-weight: 300;
+}
+
+.title {
+  margin: 0;
+  padding: 2rem;
+  font-weight: 300;
+}
