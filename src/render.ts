@@ -10,5 +10,9 @@ export function render(text: string, settings: Settings): void {
   out.classList.toggle('is-empty', empty);
   out.style.fontWeight = String(settings.fontWeight);
   out.style.fontSize = `${settings.fontSize}px`;
+  out.style.letterSpacing = `${settings.letterSpacing}em`;
+  out.style.lineHeight = String(settings.lineHeight);
+  out.style.textAlign = settings.align;
+  out.style.width = `${settings.maxWidth}%`;
   out.style.fontFamily = `"${getFontState().current.family}", var(--ui-font)`;
 }

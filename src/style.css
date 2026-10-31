@@ -317,6 +317,25 @@ input[type='number'] {
   text-align: right;
 }
 
+output {
+  flex: none;
+  width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-button {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.text-button:hover {
+  color: var(--text);
+}
+
 .unit {
   color: var(--dim);
 }
@@ -361,7 +380,6 @@ input[type='number'] {
 .preview-text {
   margin: auto;
   max-width: 100%;
-  line-height: 1.2;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
