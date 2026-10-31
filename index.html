@@ -93,7 +93,33 @@
             </section>
             <section class="group" aria-labelledby="g-size">
               <h2 id="g-size" class="group-title">Size</h2>
-              <p class="placeholder">Weight and size (H4N-14)</p>
+              <fieldset class="field weights">
+                <legend>Weight</legend>
+                <div class="segmented">
+                  <label><input type="radio" name="font-weight" value="100" />100</label>
+                  <label><input type="radio" name="font-weight" value="200" />200</label>
+                  <label><input type="radio" name="font-weight" value="300" />300</label>
+                  <label><input type="radio" name="font-weight" value="400" />400</label>
+                  <label><input type="radio" name="font-weight" value="500" />500</label>
+                  <label><input type="radio" name="font-weight" value="600" />600</label>
+                  <label><input type="radio" name="font-weight" value="700" />700</label>
+                  <label><input type="radio" name="font-weight" value="800" />800</label>
+                  <label><input type="radio" name="font-weight" value="900" />900</label>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label for="font-size-range">Size</label>
+                <input type="range" id="font-size-range" min="12" max="240" step="1" />
+                <input
+                  type="number"
+                  id="font-size-number"
+                  min="12"
+                  max="240"
+                  step="1"
+                  aria-label="Size in pixels"
+                />
+                <span class="unit">px</span>
+              </div>
             </section>
           </div>
 

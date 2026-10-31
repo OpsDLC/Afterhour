@@ -1,23 +1,24 @@
 import './style.css';
 import { loadGoogleFont } from './fonts/google';
-import { subscribe, switchFont } from './fonts/state';
+import { switchFont } from './fonts/state';
 import { render } from './render';
-import { DEFAULT_SETTINGS, DEFAULT_TEXT } from './settings';
+import { DEFAULT_SETTINGS, DEFAULT_TEXT, type Settings } from './settings';
 import { initFontPanel } from './ui/font-panel';
 import { initTabs } from './ui/tabs';
+import { initTypeControls } from './ui/type-controls';
 
 const app = document.getElementById('app')!;
 const toggle = document.getElementById('panel-toggle')!;
 const show = document.getElementById('panel-show')!;
 
-const settings = { ...DEFAULT_SETTINGS };
+const settings: Settings = { ...DEFAULT_SETTINGS };
 const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
 textInput.value = DEFAULT_TEXT;
 textInput.addEventListener('input', () => render(textInput.value, settings));
 render(textInput.value, settings);
 
 initFontPanel();
-subscribe(() => render(textInput.value, settings));
+initTypeControls(settings, () => render(textInput.value, settings));
 void switchFont('Instrument Serif', () =>
   loadGoogleFont({ family: 'Instrument Serif', weights: [400] }),
 );
