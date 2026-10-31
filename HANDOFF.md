@@ -14,7 +14,7 @@ Jira project **H4N** (Epic H4N-1) is the source of truth for tasks. This page ke
 ## Working rules
 
 - Work inside the ticket's scope; ask in a ticket comment. No publishing, domains or spending without Yunhan.
-- Branches `feature|bug|chore/H4N-<n>-<slug>`, one PR per ticket into `main`; Yunhan reviews and merges (merge commits, not squash, because PRs are often stacked).
+- Branches `feature|bug|chore/H4N-<n>-<slug>`, one PR per ticket into `main`; Yunhan reviews and merges (merge commits, not squash). **Never stack PRs**: every PR targets `main`. A stacked PR merged after its base can land in the base branch instead of `main` (this happened with H4N-39 #16).
 - Static site on GitHub Pages (public repo `OpsDLC/Afterhour`), deployed by Actions on every push to `main`.
 - Reusable parts go to **OpsDLC/DLC-UI** later (label `dlc-ui-candidate`); keep them free of app-specific imports.
 
