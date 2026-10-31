@@ -418,24 +418,102 @@ output {
 
 #preview {
   position: relative;
+  overflow: hidden;
+}
+
+.preview-scroll {
+  position: absolute;
+  inset: 0;
   display: flex;
-  padding: 4vw;
+  padding: 4vw 4vw 56px;
   overflow-x: hidden;
   overflow-y: auto;
 }
 
 #panel-show {
   position: absolute;
+  z-index: 2;
   top: 18px;
   left: 20px;
 }
 
 /* margin: auto centres short text but lets long text scroll from the top. */
-.preview-text {
+.preview-block {
+  position: relative;
   margin: auto;
   max-width: 100%;
+}
+
+.preview-text {
+  margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  cursor: grab;
+  outline: none;
+}
+
+.preview-block:hover,
+.preview-block.dragging {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.preview-block.dragging .preview-text {
+  cursor: grabbing;
+}
+
+.preview-block.editing {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.preview-block.editing .preview-text {
+  cursor: text;
+}
+
+.width-handle {
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  width: 8px;
+  height: 40px;
+  margin-top: -20px;
+  border-radius: 4px;
+  background: var(--accent);
+  cursor: ew-resize;
+  opacity: 0;
+}
+
+.preview-block:hover .width-handle,
+.preview-block.dragging .width-handle {
+  opacity: 1;
+}
+
+.preview-block.editing .width-handle {
+  display: none;
+}
+
+.gesture-tip {
+  position: absolute;
+  z-index: 3;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gesture-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--dim);
+  pointer-events: none;
 }
 
 .preview-text.is-empty {
