@@ -1,3 +1,5 @@
+import { lineHeightForSize, trackingForSize } from './type-rules';
+
 export const DEFAULT_TEXT = 'Afterhour\nthe rain keeps the letters awake';
 
 // Every typographic setting lives here. JSON-serialisable.
@@ -14,16 +16,28 @@ export interface Settings {
   align: Align;
   /** % of the preview width */
   maxWidth: number;
+  /** Tracking follows the font size until it is set by hand. */
+  autoTracking: boolean;
+  /** Line height follows the font size until it is set by hand. */
+  autoLineHeight: boolean;
 }
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = {
   fontWeight: 400,
   fontSize: 64,
-  letterSpacing: 0,
-  lineHeight: 1.2,
+  letterSpacing: trackingForSize(64),
+  lineHeight: lineHeightForSize(64),
   align: 'left',
   maxWidth: 80,
+  autoTracking: true,
+  autoLineHeight: true,
 };
+
+/** Recomputes the values that are still in AUTO from the current size. */
+export function applyAuto(settings: Settings): void {
+  if (settings.autoTracking) settings.letterSpacing = trackingForSize(settings.fontSize);
+  if (settings.autoLineHeight) settings.lineHeight = lineHeightForSize(settings.fontSize);
+}
 
 export const FONT_SIZE = { min: 12, max: 240 };
 

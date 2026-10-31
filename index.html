@@ -118,12 +118,36 @@
             <section class="group" aria-labelledby="g-spacing">
               <h2 id="g-spacing" class="group-title">Spacing</h2>
               <div class="field">
-                <label for="letter-spacing">Tracking</label>
+                <div class="field-label">
+                  <label for="letter-spacing">Tracking</label>
+                  <button
+                    type="button"
+                    class="auto-toggle"
+                    data-auto-for="letter-spacing"
+                    aria-pressed="true"
+                    title="Follow the font size"
+                    aria-label="Automatic tracking from size"
+                  >
+                    Auto
+                  </button>
+                </div>
                 <input type="range" id="letter-spacing" min="-0.05" max="0.5" step="0.005" />
                 <output for="letter-spacing"></output>
               </div>
               <div class="field">
-                <label for="line-height">Line height</label>
+                <div class="field-label">
+                  <label for="line-height">Line height</label>
+                  <button
+                    type="button"
+                    class="auto-toggle"
+                    data-auto-for="line-height"
+                    aria-pressed="true"
+                    title="Follow the font size"
+                    aria-label="Automatic line height from size"
+                  >
+                    Auto
+                  </button>
+                </div>
                 <input type="range" id="line-height" min="0.8" max="2.5" step="0.05" />
                 <output for="line-height"></output>
               </div>
@@ -132,6 +156,10 @@
                 <input type="range" id="max-width" min="20" max="100" step="1" />
                 <output for="max-width"></output>
               </div>
+              <p class="measure" id="measure" aria-live="polite"></p>
+              <button type="button" class="text-button squint" id="squint" aria-pressed="false">
+                Squint view
+              </button>
             </section>
             <section class="group" aria-labelledby="g-align">
               <h2 id="g-align" class="group-title">Alignment</h2>

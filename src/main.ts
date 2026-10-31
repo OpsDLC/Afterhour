@@ -2,9 +2,16 @@ import './style.css';
 import { loadGoogleFont } from './fonts/google';
 import { getFontState, switchFont } from './fonts/state';
 import { render } from './render';
-import { DEFAULT_SETTINGS, DEFAULT_TEXT, nearestWeight, type Settings } from './settings';
+import {
+  applyAuto,
+  DEFAULT_SETTINGS,
+  DEFAULT_TEXT,
+  nearestWeight,
+  type Settings,
+} from './settings';
 import { initFontPanel } from './ui/font-panel';
 import { initLayoutControls } from './ui/layout-controls';
+import { initSquint, updateMeasure } from './ui/measure';
 import { initPreviewGestures } from './ui/preview-gestures';
 import { initTabs } from './ui/tabs';
 import { initTypeControls } from './ui/type-controls';
@@ -15,18 +22,28 @@ const show = document.getElementById('panel-show')!;
 
 const settings: Settings = { ...DEFAULT_SETTINGS };
 const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
-const update = () => render(textInput.value, settings);
+const update = () => {
+  render(textInput.value, settings);
+  updateMeasure(settings);
+};
 textInput.value = DEFAULT_TEXT;
 textInput.addEventListener('input', update);
-update();
 
-initFontPanel();
-const syncControls = [initTypeControls(settings, update), initLayoutControls(settings, update)];
-
+// Every settings change goes through here: AUTO values follow the size, then panel and preview.
+let syncControls: (() => void)[] = [];
 const syncAll = () => {
+  applyAuto(settings);
   for (const sync of syncControls) sync();
   update();
 };
+
+initFontPanel();
+syncControls = [initTypeControls(settings, syncAll), initLayoutControls(settings, syncAll)];
+initSquint();
+syncAll();
+new ResizeObserver(() => updateMeasure(settings)).observe(
+  document.getElementById('preview-block')!,
+);
 
 // Reset restores every setting (the text stays), keeping the weight valid for the current font.
 document.getElementById('reset')!.addEventListener('click', () => {

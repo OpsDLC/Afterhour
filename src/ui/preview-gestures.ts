@@ -51,6 +51,9 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
     },
     onMove: ({ dx, dy }, e) => {
       const { letterSpacing: ls, lineHeight: lh } = LIMITS;
+      // A value set by hand stops following the size.
+      if (dx) settings.autoTracking = false;
+      if (dy) settings.autoLineHeight = false;
       settings.letterSpacing = round(
         clamp(start.letterSpacing + dx * TRACKING_PER_PX, ls.min, ls.max),
         0.001,
