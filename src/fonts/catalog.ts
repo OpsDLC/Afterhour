@@ -2,7 +2,7 @@ import { googleFonts, type GoogleFont } from './google';
 
 export interface CatalogFont extends GoogleFont {
   source: 'system' | 'google';
-  /** Section heading in the picker. */
+  /** Tier used for ordering (the picker shows one list, no headings). */
   group: string;
 }
 

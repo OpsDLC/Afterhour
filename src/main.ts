@@ -71,8 +71,9 @@ initPreviewGestures({
   },
 });
 
-void switchFont('Instrument Serif', () =>
-  loadGoogleFont({ family: 'Instrument Serif', weights: [400] }),
+// Default face: EB Garamond (Yunhan, H4N-40).
+void switchFont('EB Garamond', () =>
+  loadGoogleFont({ family: 'EB Garamond', weights: [400, 500, 600, 700, 800] }),
 );
 
 initTabs(document.querySelector<HTMLElement>('[role="tablist"]')!);
