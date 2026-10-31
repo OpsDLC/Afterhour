@@ -10,6 +10,21 @@ export default tseslint.config(
     languageOptions: { globals: { URL: 'readonly', console: 'readonly' } },
   },
   {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'writable',
+        __dirname: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },

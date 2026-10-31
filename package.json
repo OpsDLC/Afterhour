@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "fonts:update": "node scripts/update-google-fonts.mjs"
+    "fonts:update": "node scripts/update-google-fonts.mjs",
+    "test": "node --experimental-strip-types --no-warnings --test tests/*.test.ts",
+    "rain:fixture": "node scripts/rain-parity-fixture.cjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

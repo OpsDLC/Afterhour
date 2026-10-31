@@ -1,0 +1,27 @@
+{
+  "source": "research/rain/glass-sim.html (v9), seed 11, 960×540",
+  "steps": {
+    "29": {
+      "drops": 67,
+      "trails": 0,
+      "hash": "9e8a91df87901d061111a475cb1c68102fc530c39ce40bd0f898e0b5fb93862c"
+    },
+    "149": {
+      "drops": 811,
+      "trails": 1,
+      "hash": "5cca20a89eacfa5ad7a4e8b1b7a499578a6c6e48ee5aa9a3d5b95ef99931b7be"
+    },
+    "299": {
+      "drops": 1788,
+      "trails": 51,
+      "hash": "d16d893f5d8bb358e32f0064518c52aa777e3ac4aa2b9ce6cab6c9e8920ad7c1"
+    },
+    "449": {
+      "drops": 1233,
+      "trails": 149,
+      "hash": "a02f5aba3781570081443dac342050c0aa8bc0b3261d19facc0f5b43412ad80f"
+    }
+  },
+  "lens": "3588c1407580da0c42f4b7f64f086f61b8ff21be0b0667d27494d398ebaaf42a",
+  "fusion": "34310afe80c2499b4d0a0dd74930d7ac39d6ae4c919b01079096a73decab1307"
+}
