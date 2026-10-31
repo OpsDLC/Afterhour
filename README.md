@@ -20,6 +20,12 @@ A web typography tool: bring a font, type text, and (later) let night-rain dropl
 
 The production build is written to **`dist/`**. Assets use the base path `/Afterhour/` (set in `vite.config.ts`) so they resolve on GitHub Pages.
 
+## Deploy
+
+Every push to `main` (and a manual run from the Actions tab) runs `.github/workflows/deploy.yml`: `npm ci` → `npm run build` → upload `dist/` → deploy to GitHub Pages. Repo setting required once: **Settings → Pages → Source: GitHub Actions**.
+
+Live site: https://opsdlc.github.io/Afterhour/
+
 ## Stack
 
 Vite + vanilla TypeScript, Canvas 2D / DOM, no UI framework (see Jira H4N-19).
