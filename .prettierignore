@@ -3,3 +3,4 @@ node_modules
 package-lock.json
 src/fonts/google-fonts.json
 research
+src/fonts/google-ttf.json

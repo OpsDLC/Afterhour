@@ -10,6 +10,11 @@ const SIGNATURES: Record<string, string> = {
 };
 
 let counter = 0;
+/** Uploaded files by CSS family, kept so the outlines can be read later (H4N-28). */
+const files = new Map<string, ArrayBuffer>();
+
+/** The bytes of an uploaded font, as uploaded (any container). */
+export const getLocalFontFile = (family: string) => files.get(family);
 
 /** Loads a font file into the page with the FontFace API. The bytes never leave the browser. */
 export async function loadLocalFont(file: File): Promise<FontInfo> {
@@ -24,6 +29,7 @@ export async function loadLocalFont(file: File): Promise<FontInfo> {
   const range = await weightRange(buffer, kind).catch(() => null);
   const name = file.name.replace(/\.[^.]+$/, '');
   const family = `ah-local-${++counter}`;
+  const copy = buffer.slice(0); // FontFace may take ownership of the buffer
   const face = new FontFace(family, buffer, range ? { weight: range.join(' ') } : {});
   try {
     await face.load();
@@ -31,6 +37,7 @@ export async function loadLocalFont(file: File): Promise<FontInfo> {
     throw new Error(`The browser could not read “${file.name}”.`);
   }
   document.fonts.add(face);
+  files.set(family, copy);
 
   const [min, max] = range ?? [400, 400];
   const weights: number[] = [];
