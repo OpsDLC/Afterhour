@@ -1,30 +1,56 @@
 import { getFontState, subscribe } from '../fonts/state';
-import { clamp, FONT_SIZE, nearestWeight, type Settings } from '../settings';
+import { clamp, FONT_SIZE, nearestWeight, weightName, type Settings } from '../settings';
 
-const weightRadios = Array.from(
-  document.querySelectorAll<HTMLInputElement>('input[name="font-weight"]'),
-);
+const weightStrip = document.getElementById('weight-strip')!;
+const weightNameEl = document.getElementById('weight-name')!;
 const sizeRange = document.getElementById('font-size-range') as HTMLInputElement;
 const sizeNumber = document.getElementById('font-size-number') as HTMLInputElement;
 
 /** Wires weight and size to `settings`; `changed` re-renders. Returns a function that syncs the UI. */
 export function initTypeControls(settings: Settings, changed: () => void): () => void {
+  // One "Aa" specimen per weight the current font has, drawn in that weight.
+  let shownFor = '';
+  const buildWeights = () => {
+    const { family, weights } = getFontState().current;
+    const key = `${family}|${weights.join()}`;
+    if (key === shownFor) return;
+    shownFor = key;
+    weightStrip.replaceChildren(
+      ...weights.map((w) => {
+        const label = document.createElement('label');
+        label.title = `${weightName(w)} ${w}`;
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'font-weight';
+        radio.value = String(w);
+        radio.setAttribute('aria-label', `${weightName(w)} ${w}`);
+        const sample = document.createElement('span');
+        sample.textContent = 'Aa';
+        sample.style.fontFamily = `"${family}", var(--ui-font)`;
+        sample.style.fontWeight = String(w);
+        const number = document.createElement('small');
+        number.textContent = String(w);
+        label.append(radio, sample, number);
+        return label;
+      }),
+    );
+  };
+
   const sync = () => {
-    const { weights } = getFontState().current;
-    for (const radio of weightRadios) {
-      const w = Number(radio.value);
-      radio.disabled = !weights.includes(w);
-      radio.checked = w === settings.fontWeight;
+    buildWeights();
+    for (const radio of weightStrip.querySelectorAll<HTMLInputElement>('input')) {
+      radio.checked = Number(radio.value) === settings.fontWeight;
     }
+    const only = getFontState().current.weights.length === 1 ? ' · only weight' : '';
+    weightNameEl.textContent = `${weightName(settings.fontWeight)} · ${settings.fontWeight}${only}`;
     sizeRange.value = sizeNumber.value = String(settings.fontSize);
   };
 
-  for (const radio of weightRadios) {
-    radio.addEventListener('change', () => {
-      settings.fontWeight = Number(radio.value);
-      changed();
-    });
-  }
+  weightStrip.addEventListener('change', (e) => {
+    settings.fontWeight = Number((e.target as HTMLInputElement).value);
+    sync();
+    changed();
+  });
 
   const setSize = (value: number) => {
     settings.fontSize = clamp(Math.round(value), FONT_SIZE.min, FONT_SIZE.max);

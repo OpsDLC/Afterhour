@@ -258,6 +258,63 @@ button {
   margin-bottom: 6px;
 }
 
+.weight-strip {
+  display: flex;
+  gap: 2px;
+}
+
+.weight-strip label {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 48px;
+  padding: 6px 0 4px;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.weight-strip label:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.weight-strip span {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.weight-strip small {
+  display: block;
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--dim);
+}
+
+.weight-strip input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: inherit;
+}
+
+.weight-strip label:has(input:checked),
+.weight-strip label:has(input:checked) small {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.weight-strip label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.weight-name {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+}
+
 .segmented {
   display: flex;
   border: 1px solid var(--line);
@@ -289,11 +346,6 @@ button {
 .segmented label:has(input:checked) {
   background: var(--accent);
   color: var(--bg);
-}
-
-.segmented label:has(input:disabled) {
-  opacity: 0.3;
-  cursor: default;
 }
 
 .segmented label:has(input:focus-visible) {
