@@ -27,6 +27,14 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
 
 export const FONT_SIZE = { min: 12, max: 240 };
 
+/** Ranges for every numeric setting (the sliders in index.html use the same values). */
+export const LIMITS = {
+  fontSize: FONT_SIZE,
+  letterSpacing: { min: -0.05, max: 0.5 },
+  lineHeight: { min: 0.8, max: 2.5 },
+  maxWidth: { min: 20, max: 100 },
+};
+
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 

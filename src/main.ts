@@ -5,6 +5,7 @@ import { render } from './render';
 import { DEFAULT_SETTINGS, DEFAULT_TEXT, nearestWeight, type Settings } from './settings';
 import { initFontPanel } from './ui/font-panel';
 import { initLayoutControls } from './ui/layout-controls';
+import { initPreviewGestures } from './ui/preview-gestures';
 import { initTabs } from './ui/tabs';
 import { initTypeControls } from './ui/type-controls';
 
@@ -22,12 +23,26 @@ update();
 initFontPanel();
 const syncControls = [initTypeControls(settings, update), initLayoutControls(settings, update)];
 
+const syncAll = () => {
+  for (const sync of syncControls) sync();
+  update();
+};
+
 // Reset restores every setting (the text stays), keeping the weight valid for the current font.
 document.getElementById('reset')!.addEventListener('click', () => {
   Object.assign(settings, DEFAULT_SETTINGS);
   settings.fontWeight = nearestWeight(getFontState().current.weights, settings.fontWeight);
-  for (const sync of syncControls) sync();
-  update();
+  syncAll();
+});
+
+initPreviewGestures({
+  settings,
+  changed: syncAll,
+  getText: () => textInput.value,
+  setText: (value) => {
+    textInput.value = value;
+    update();
+  },
 });
 
 void switchFont('Instrument Serif', () =>
