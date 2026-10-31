@@ -1,9 +1,17 @@
 import './style.css';
+import { render } from './render';
+import { DEFAULT_SETTINGS, DEFAULT_TEXT } from './settings';
 import { initTabs } from './ui/tabs';
 
 const app = document.getElementById('app')!;
 const toggle = document.getElementById('panel-toggle')!;
 const show = document.getElementById('panel-show')!;
+
+const settings = { ...DEFAULT_SETTINGS };
+const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
+textInput.value = DEFAULT_TEXT;
+textInput.addEventListener('input', () => render(textInput.value, settings));
+render(textInput.value, settings);
 
 initTabs(document.querySelector<HTMLElement>('[role="tablist"]')!);
 

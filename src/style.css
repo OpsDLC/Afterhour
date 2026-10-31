@@ -102,6 +102,20 @@ button {
   color: var(--dim);
 }
 
+#text-input {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .tabs {
   display: flex;
   padding: 0 12px;
@@ -127,10 +141,9 @@ button {
 #preview {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 4vw;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #panel-show {
@@ -139,10 +152,18 @@ button {
   left: 20px;
 }
 
+/* margin: auto centres short text but lets long text scroll from the top. */
 .preview-text {
-  margin: 0;
+  margin: auto;
+  max-width: 100%;
   font-size: 64px;
   line-height: 1.2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.preview-text.is-empty {
+  color: var(--dim);
 }
 
 /* Desktop only: below 1024px show a notice unless the user opts in. */
