@@ -21,12 +21,28 @@ export function updateMeasure(settings: Settings): void {
   out.classList.toggle('off-measure', !comfortable);
 }
 
-/** Squint view: blurs the preview so only the texture of the text block is left. */
-export function initSquint(): void {
-  const button = document.getElementById('squint')!;
-  button.addEventListener('click', () => {
-    const on = button.getAttribute('aria-pressed') !== 'true';
+/**
+ * Blur view: blurs the preview so only the texture of the text block is left. The corner
+ * button toggles it; holding B shows it until the key is released.
+ */
+export function initBlurView(): void {
+  const button = document.getElementById('blur-view')!;
+  let pinned = false;
+  const show = (on: boolean) => {
     button.setAttribute('aria-pressed', String(on));
-    block.classList.toggle('squint', on);
+    block.classList.toggle('blurred', on);
+  };
+  button.addEventListener('click', () => show((pinned = !pinned)));
+
+  const typing = (el: EventTarget | null) =>
+    el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA)$/.test(el.tagName));
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() !== 'b' || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (typing(e.target)) return;
+    show(true);
   });
+  window.addEventListener('keyup', (e) => {
+    if (e.key.toLowerCase() === 'b') show(pinned);
+  });
+  window.addEventListener('blur', () => show(pinned));
 }

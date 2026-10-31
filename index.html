@@ -157,9 +157,6 @@
                 <output for="max-width"></output>
               </div>
               <p class="measure" id="measure" aria-live="polite"></p>
-              <button type="button" class="text-button squint" id="squint" aria-pressed="false">
-                Squint view
-              </button>
             </section>
             <section class="group" aria-labelledby="g-align">
               <h2 id="g-align" class="group-title">Alignment</h2>
@@ -190,6 +187,27 @@
         >
           »
         </button>
+        <button
+          type="button"
+          id="blur-view"
+          class="icon-button view-toggle"
+          aria-pressed="false"
+          aria-label="Blur to check the texture (hold B)"
+          title="Blur to check the texture · hold B"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="8" stroke-dasharray="2 2.2" />
+            <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" opacity="0.6" />
+          </svg>
+        </button>
         <div class="preview-scroll" id="preview-scroll">
           <div class="preview-block" id="preview-block">
             <p class="preview-text" id="preview-text"></p>
@@ -199,7 +217,7 @@
         <div class="gesture-tip" id="gesture-tip" hidden></div>
         <p class="gesture-hint">
           Drag text: ↔ tracking · ↕ line height · Scroll or pinch: size · Drag edge: width ·
-          Double-click: edit · Shift fine · Alt one axis
+          Double-click: edit · Shift fine · Alt one axis · Hold B: blur
         </p>
       </main>
     </div>
