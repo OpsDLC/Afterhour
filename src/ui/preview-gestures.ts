@@ -1,4 +1,5 @@
 import { clamp, LIMITS, type Settings } from '../settings';
+import { getZoom } from './artboard';
 import { initDrag } from './drag';
 
 const preview = document.getElementById('preview')!;
@@ -79,7 +80,7 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
   initDrag(handle, {
     threshold: 0,
     onStart: () => {
-      startWidth = block.getBoundingClientRect().width;
+      startWidth = block.offsetWidth; // artboard px (the artboard is scaled on screen)
       block.classList.add('dragging');
     },
     onMove: ({ dx }, e) => {
@@ -87,7 +88,9 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
       const room =
         scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
       const { min, max } = LIMITS.maxWidth;
-      settings.maxWidth = Math.round(clamp(((startWidth + 2 * dx) / room) * 100, min, max));
+      settings.maxWidth = Math.round(
+        clamp(((startWidth + (2 * dx) / getZoom()) / room) * 100, min, max),
+      );
       changed();
       showTip(e, `Width ${settings.maxWidth}%`);
     },

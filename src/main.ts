@@ -9,6 +9,7 @@ import {
   nearestWeight,
   type Settings,
 } from './settings';
+import { initArtboard } from './ui/artboard';
 import { initFontPanel } from './ui/font-panel';
 import { initLayoutControls } from './ui/layout-controls';
 import { initSquintView, updateMeasure } from './ui/measure';
@@ -38,7 +39,11 @@ const syncAll = () => {
 };
 
 initFontPanel();
-syncControls = [initTypeControls(settings, syncAll), initLayoutControls(settings, syncAll)];
+syncControls = [
+  initTypeControls(settings, syncAll),
+  initLayoutControls(settings, syncAll),
+  initArtboard(settings, syncAll),
+];
 initSquintView();
 syncAll();
 new ResizeObserver(() => updateMeasure(settings)).observe(
