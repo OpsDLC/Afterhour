@@ -1,11 +1,14 @@
 :root {
-  --bg: #14161a;
-  --text: #e8e4dc;
-  --accent: #e9b872;
+  --bg: #ffffff;
+  --text: #000000;
+  /* International Klein Blue: primary colour for interaction. */
+  --accent: #002fa7;
   --line: color-mix(in srgb, var(--text) 14%, transparent);
   --dim: color-mix(in srgb, var(--text) 55%, transparent);
   --panel-width: 320px;
-  --ui-font: 'New York', 'Instrument Serif', Georgia, serif;
+  --ui-font:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
 }
 
 *,
@@ -21,7 +24,6 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--ui-font);
-  font-weight: 300;
 }
 
 button {
@@ -67,8 +69,8 @@ button {
 
 .brand {
   margin: 0;
-  font-size: 20px;
-  font-weight: 300;
+  font-size: 17px;
+  font-weight: 600;
 }
 
 .icon-button {
@@ -285,8 +287,8 @@ button {
 }
 
 .segmented label:has(input:checked) {
-  color: var(--accent);
-  box-shadow: inset 0 -2px var(--accent);
+  background: var(--accent);
+  color: var(--bg);
 }
 
 .segmented label:has(input:disabled) {
@@ -296,13 +298,13 @@ button {
 
 .segmented label:has(input:focus-visible) {
   outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline-offset: 1px;
 }
 
 input[type='range'] {
   flex: 1;
   min-width: 0;
-  accent-color: var(--text);
+  accent-color: var(--accent);
 }
 
 input[type='number'] {
