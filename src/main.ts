@@ -14,6 +14,7 @@ import { initFontPanel } from './ui/font-panel';
 import { initLayoutControls } from './ui/layout-controls';
 import { initSquintView, updateMeasure } from './ui/measure';
 import { initPreviewGestures } from './ui/preview-gestures';
+import { initRainPanel } from './ui/rain-panel';
 import { initTabs } from './ui/tabs';
 import { initTypeControls } from './ui/type-controls';
 
@@ -23,9 +24,11 @@ const show = document.getElementById('panel-show')!;
 
 const settings: Settings = { ...DEFAULT_SETTINGS };
 const textInput = document.getElementById('text-input') as HTMLTextAreaElement;
+let rain: { pageChanged: () => void } | null = null;
 const update = () => {
   render(textInput.value, settings);
   updateMeasure(settings);
+  rain?.pageChanged();
 };
 textInput.value = DEFAULT_TEXT;
 textInput.addEventListener('input', update);
@@ -45,6 +48,7 @@ syncControls = [
   initArtboard(settings, syncAll),
 ];
 initSquintView();
+rain = initRainPanel(settings);
 syncAll();
 new ResizeObserver(() => updateMeasure(settings)).observe(
   document.getElementById('preview-block')!,

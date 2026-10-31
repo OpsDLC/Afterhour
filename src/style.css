@@ -731,3 +731,43 @@ output {
   width: 64px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Rain (H4N-39): the rendered pane sits over the live text, which stays interactive underneath. */
+.rain-canvas {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+}
+
+.artboard.raining .rain-canvas {
+  display: block;
+}
+
+.artboard.raining .preview-text {
+  color: transparent;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rain-clock {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+#rain-seed {
+  width: 96px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--dim);
+}
