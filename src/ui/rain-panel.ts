@@ -3,6 +3,7 @@ import { inkMaps, RainSim, renderFusion, renderLens } from '../rain/index.ts';
 import type { FrameMessage, ToWorker, View } from '../rain/worker';
 import type { Settings } from '../settings';
 import { getZoom, setLabelExtra } from './artboard';
+import { visualLines } from './text-lines';
 
 // H4N-39: the first slice of the Rain tab. While the tab is open, rain falls on the artboard.
 // The type is rasterised from the live DOM layout, so line breaks, alignment and tracking match.
@@ -106,9 +107,8 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
     const c = off.getContext('2d')!;
     c.fillStyle = '#fff';
     c.fillRect(0, 0, w, h);
-    const node = text.firstChild;
-    if (node && node.nodeType === Node.TEXT_NODE && !text.classList.contains('is-empty')) {
-      const str = node.textContent ?? '';
+    const lines = visualLines(text);
+    if (lines.length) {
       const { family } = getFontState().current;
       c.font = `${settings.fontWeight} ${settings.fontSize}px "${family}"`;
       c.letterSpacing = `${settings.letterSpacing * settings.fontSize}px`;
@@ -117,34 +117,9 @@ export function initRainPanel(settings: Settings): { pageChanged: () => void } {
       const ascent = c.measureText('Hg').fontBoundingBoxAscent;
       const origin = board.getBoundingClientRect(),
         z = getZoom();
-      const range = document.createRange();
-      // group characters into visual lines by their box top
-      let line: { top: number; left: number; from: number; to: number } | null = null;
-      const flush = () => {
-        if (!line) return;
-        c.fillText(
-          str.slice(line.from, line.to),
-          (line.left - origin.left) / z,
-          (line.top - origin.top) / z + ascent,
-        );
-        line = null;
-      };
-      for (let i = 0; i < str.length; i++) {
-        if (str[i] === '\n') {
-          flush();
-          continue;
-        }
-        range.setStart(node, i);
-        range.setEnd(node, i + 1);
-        const r = range.getClientRects()[0];
-        if (!r) continue;
-        if (line && Math.abs(r.top - line.top) < 1) line.to = i + 1;
-        else {
-          flush();
-          line = { top: r.top, left: r.left, from: i, to: i + 1 };
-        }
+      for (const l of lines) {
+        c.fillText(l.text, (l.left - origin.left) / z, (l.top - origin.top) / z + ascent);
       }
-      flush();
     }
     const rgba = c.getImageData(0, 0, w, h).data;
     send({ type: 'page', width: w, height: h, rgba }, [rgba.buffer]);

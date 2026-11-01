@@ -1,5 +1,5 @@
 import { clamp, LIMITS, type Settings } from '../settings';
-import { getZoom } from './artboard';
+import { getZoom, setAdjusting } from './artboard';
 import { initDrag } from './drag';
 
 const preview = document.getElementById('preview')!;
@@ -49,6 +49,7 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
     onStart: () => {
       start = { letterSpacing: settings.letterSpacing, lineHeight: settings.lineHeight };
       block.classList.add('dragging');
+      setAdjusting(true);
     },
     onMove: ({ dx, dy }, e) => {
       const { letterSpacing: ls, lineHeight: lh } = LIMITS;
@@ -71,6 +72,7 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
     },
     onEnd: () => {
       block.classList.remove('dragging');
+      setAdjusting(false);
       hideTip();
     },
   });
@@ -82,6 +84,7 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
     onStart: () => {
       startWidth = block.offsetWidth; // artboard px (the artboard is scaled on screen)
       block.classList.add('dragging');
+      setAdjusting(true);
     },
     onMove: ({ dx }, e) => {
       const style = getComputedStyle(scroller);
@@ -96,12 +99,14 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
     },
     onEnd: () => {
       block.classList.remove('dragging');
+      setAdjusting(false);
       hideTip();
     },
   });
 
   // Wheel or trackpad pinch over the text: size. A plain wheel still scrolls text that overflows.
   let size = settings.fontSize;
+  let wheelTimer = 0;
   block.addEventListener(
     'wheel',
     (e) => {
@@ -115,6 +120,9 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
       changed();
       showTip(e, `Size ${settings.fontSize}px`);
       hideTip(700);
+      setAdjusting(true);
+      clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(() => setAdjusting(false), 700);
     },
     { passive: false },
   );

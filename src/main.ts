@@ -9,7 +9,7 @@ import {
   nearestWeight,
   type Settings,
 } from './settings';
-import { initArtboard } from './ui/artboard';
+import { initArtboard, refreshRulers } from './ui/artboard';
 import { initFontPanel } from './ui/font-panel';
 import { initLayoutControls } from './ui/layout-controls';
 import { initSquintView, updateMeasure } from './ui/measure';
@@ -28,6 +28,7 @@ let rain: { pageChanged: () => void } | null = null;
 const update = () => {
   render(textInput.value, settings);
   updateMeasure(settings);
+  refreshRulers();
   rain?.pageChanged();
 };
 textInput.value = DEFAULT_TEXT;
