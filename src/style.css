@@ -639,53 +639,89 @@ output {
   position: relative;
   margin: auto;
   max-width: 100%;
+  /* the artboard is scaled; --inv-zoom keeps frame lines and handles at screen size */
+  --hair: calc(1px * var(--inv-zoom, 1));
 }
 
 .preview-text {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  cursor: grab;
+  cursor: default;
   outline: none;
+  user-select: none; /* a stray drag must not paint a selection; editing turns it back on */
 }
 
-.preview-block:hover,
-.preview-block.dragging {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+/* Text frame (H4N-42 · R1): a hairline on hover, solid when selected; only geometry is direct. */
+.preview-block:hover {
+  box-shadow: 0 0 0 var(--hair) color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.preview-block.dragging .preview-text {
-  cursor: grabbing;
-}
-
+.preview-block.selected,
+.preview-block.dragging,
 .preview-block.editing {
-  box-shadow: 0 0 0 1px var(--accent);
+  box-shadow: 0 0 0 var(--hair) var(--accent);
 }
 
 .preview-block.editing .preview-text {
   cursor: text;
+  user-select: text;
 }
 
-.width-handle {
+.frame-handle {
+  --size: calc(8px * var(--inv-zoom, 1));
   position: absolute;
   top: 50%;
-  right: -4px;
-  width: 8px;
-  height: 40px;
-  margin-top: -20px;
-  border-radius: 4px;
-  background: var(--accent);
+  width: var(--size);
+  height: var(--size);
+  margin-top: calc(var(--size) / -2);
+  border: var(--hair) solid var(--accent);
+  background: var(--bg);
   cursor: ew-resize;
   opacity: 0;
 }
 
-.preview-block:hover .width-handle,
-.preview-block.dragging .width-handle {
+.frame-handle.left {
+  left: calc(var(--size) / -2);
+}
+
+.frame-handle.right {
+  right: calc(var(--size) / -2);
+}
+
+.preview-block:hover .frame-handle,
+.preview-block.selected .frame-handle,
+.preview-block.dragging .frame-handle {
   opacity: 1;
 }
 
-.preview-block.editing .width-handle {
+.preview-block.editing .frame-handle {
   display: none;
+}
+
+/* Scrubbable labels and values in the panel (H4N-42 · B): drag left or right to change. */
+.scrub {
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+output.scrub:hover {
+  color: var(--accent);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.scrub-edit {
+  width: 64px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px solid var(--accent);
+  background: none;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  outline: none;
 }
 
 .gesture-tip {

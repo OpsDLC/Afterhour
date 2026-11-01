@@ -1,3 +1,5 @@
+import { setAdjusting } from './artboard';
+import { initScrub } from './scrub';
 import { getFontState, subscribe } from '../fonts/state';
 import { clamp, FONT_SIZE, nearestWeight, weightName, type Settings } from '../settings';
 
@@ -64,6 +66,18 @@ export function initTypeControls(settings: Settings, changed: () => void): () =>
     if (sizeNumber.value.trim() === '' || !Number.isFinite(value)) sync();
     else setSize(value);
   });
+
+  // Scrub the Size label (H4N-42 · B); the number field already takes typing.
+  const sizeLabel = document.querySelector<HTMLElement>('label[for="font-size-range"]');
+  if (sizeLabel) {
+    initScrub(sizeLabel, {
+      get: () => settings.fontSize,
+      set: (v) => setSize(Math.round(v)),
+      perPx: 0.5,
+      onStart: () => setAdjusting(true),
+      onEnd: () => setAdjusting(false),
+    });
+  }
 
   // A new font may not have the current weight: move to the nearest one it has.
   subscribe(({ current }) => {

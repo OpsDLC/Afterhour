@@ -6,12 +6,13 @@ const preview = document.getElementById('preview')!;
 const scroller = document.getElementById('preview-scroll')!;
 const block = document.getElementById('preview-block')!;
 const text = document.getElementById('preview-text')!;
-const handle = document.getElementById('width-handle')!;
+const handles = Array.from(block.querySelectorAll<HTMLElement>('.frame-handle'));
 const tip = document.getElementById('gesture-tip')!;
 
-// How far a pixel of pointer movement moves each value.
-const TRACKING_PER_PX = 0.001; // em
-const LINE_HEIGHT_PER_PX = 0.005;
+// H4N-42 · R1: the canvas only changes geometry (the text frame's width, by its handles).
+// Tracking and leading are nudged from the keyboard, as in InDesign, or scrubbed in the panel.
+const TRACKING_STEP = 0.005; // em per ⌥←/→
+const LEADING_STEP = 0.01; // per ⌥↑/↓
 const SIZE_PER_WHEEL = 0.0015; // exponential: one notch (~100) ≈ 16%
 
 interface GestureOptions {
@@ -42,76 +43,90 @@ function hideTip(delay = 0): void {
 export function initPreviewGestures({ settings, changed, getText, setText }: GestureOptions): void {
   const editing = () => text.isContentEditable;
 
-  // Drag the text: horizontal = tracking, vertical = line height.
-  let start = { letterSpacing: 0, lineHeight: 0 };
-  initDrag(text, {
-    enabled: () => !editing(),
-    onStart: () => {
-      start = { letterSpacing: settings.letterSpacing, lineHeight: settings.lineHeight };
-      block.classList.add('dragging');
-      setAdjusting(true);
-    },
-    onMove: ({ dx, dy }, e) => {
-      const { letterSpacing: ls, lineHeight: lh } = LIMITS;
-      // A value set by hand stops following the size.
-      if (dx) settings.autoTracking = false;
-      if (dy) settings.autoLineHeight = false;
+  // Click selects the text frame; clicking elsewhere on the canvas or Esc deselects.
+  let selected = false;
+  const select = (on: boolean) => {
+    selected = on;
+    block.classList.toggle('selected', on);
+  };
+  text.addEventListener('pointerdown', () => select(true));
+  document.getElementById('pasteboard')!.addEventListener('pointerdown', (e) => {
+    if (!block.contains(e.target as Node)) select(false);
+  });
+
+  // Frame handles: width. The block is centred, so each side moves half the width change.
+  for (const h of handles) {
+    const side = Number(h.dataset.side);
+    let startWidth = 0;
+    initDrag(h, {
+      threshold: 0,
+      onStart: () => {
+        startWidth = block.offsetWidth; // artboard px (the artboard is scaled on screen)
+        block.classList.add('dragging');
+        select(true);
+        setAdjusting(true);
+      },
+      onMove: ({ dx }, e) => {
+        const style = getComputedStyle(scroller);
+        const room =
+          scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const { min, max } = LIMITS.maxWidth;
+        settings.maxWidth = Math.round(
+          clamp(((startWidth + (2 * side * dx) / getZoom()) / room) * 100, min, max),
+        );
+        changed();
+        showTip(e, `Width ${settings.maxWidth}%`);
+      },
+      onEnd: () => {
+        block.classList.remove('dragging');
+        setAdjusting(false);
+        hideTip();
+      },
+    });
+  }
+
+  // ⌥←/→ tracking, ⌥↑/↓ leading on the selected text; ⇧ for ×5 (InDesign's keys).
+  let nudgeTimer = 0;
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && selected && !editing()) select(false);
+    if (!selected || editing() || !e.altKey || e.metaKey || e.ctrlKey) return;
+    const dir = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -1, ArrowDown: 1 }[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    const times = e.shiftKey ? 5 : 1;
+    const box = block.getBoundingClientRect();
+    const at = { clientX: box.right - 120, clientY: box.bottom - 6 };
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      const { min, max } = LIMITS.letterSpacing;
+      settings.autoTracking = false; // a value set by hand stops following the size
       settings.letterSpacing = round(
-        clamp(start.letterSpacing + dx * TRACKING_PER_PX, ls.min, ls.max),
+        clamp(settings.letterSpacing + dir * times * TRACKING_STEP, min, max),
         0.001,
       );
+      showTip(at, `Tracking ${settings.letterSpacing.toFixed(3)}em`);
+    } else {
+      const { min, max } = LIMITS.lineHeight;
+      settings.autoLineHeight = false;
       settings.lineHeight = round(
-        clamp(start.lineHeight + dy * LINE_HEIGHT_PER_PX, lh.min, lh.max),
+        clamp(settings.lineHeight + dir * times * LEADING_STEP, min, max),
         0.01,
       );
-      changed();
-      showTip(
-        e,
-        `Tracking ${settings.letterSpacing.toFixed(3)}em · Line height ${settings.lineHeight.toFixed(2)}`,
-      );
-    },
-    onEnd: () => {
-      block.classList.remove('dragging');
-      setAdjusting(false);
-      hideTip();
-    },
+      showTip(at, `Line height ${settings.lineHeight.toFixed(2)}`);
+    }
+    changed();
+    hideTip(900);
+    setAdjusting(true);
+    clearTimeout(nudgeTimer);
+    nudgeTimer = window.setTimeout(() => setAdjusting(false), 900);
   });
 
-  // Drag the right edge: width. The block is centred, so the edge moves half as fast as the width.
-  let startWidth = 0;
-  initDrag(handle, {
-    threshold: 0,
-    onStart: () => {
-      startWidth = block.offsetWidth; // artboard px (the artboard is scaled on screen)
-      block.classList.add('dragging');
-      setAdjusting(true);
-    },
-    onMove: ({ dx }, e) => {
-      const style = getComputedStyle(scroller);
-      const room =
-        scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-      const { min, max } = LIMITS.maxWidth;
-      settings.maxWidth = Math.round(
-        clamp(((startWidth + (2 * dx) / getZoom()) / room) * 100, min, max),
-      );
-      changed();
-      showTip(e, `Width ${settings.maxWidth}%`);
-    },
-    onEnd: () => {
-      block.classList.remove('dragging');
-      setAdjusting(false);
-      hideTip();
-    },
-  });
-
-  // Wheel or trackpad pinch over the text: size. A plain wheel still scrolls text that overflows.
+  // Trackpad pinch (ctrlKey) or ⌘ + wheel over the text: size. A plain wheel only scrolls.
   let size = settings.fontSize;
   let wheelTimer = 0;
   block.addEventListener(
     'wheel',
     (e) => {
-      const overflowing = scroller.scrollHeight > scroller.clientHeight;
-      if (editing() || (overflowing && !e.ctrlKey)) return;
+      if (editing() || !(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
       if (Math.round(size) !== settings.fontSize) size = settings.fontSize;
       const { min, max } = LIMITS.fontSize;
@@ -133,6 +148,7 @@ export function initPreviewGestures({ settings, changed, getText, setText }: Ges
     if (getText() === '') text.textContent = '';
     text.contentEditable = 'plaintext-only';
     block.classList.add('editing');
+    select(true);
     text.focus();
   });
   text.addEventListener('input', () => setText(text.innerText.replace(/\n$/, '')));
