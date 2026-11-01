@@ -310,26 +310,14 @@
                   aria-label="Restart on dry glass"
                   title="Restart on dry glass · Shift R"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    aria-hidden="true"
-                  >
-                    <path d="M4 12a8 8 0 1 0 2.34-5.66" />
-                    <path d="M4 4v5h5" />
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                    <rect x="2.5" y="2.5" width="1.6" height="9" fill="currentColor" />
+                    <path d="M11.5 2.5v9L5 7z" fill="currentColor" />
                   </svg>
                 </button>
                 <span class="key-hints"><kbd>K</kbd> play <kbd>⇧R</kbd> restart</span>
               </div>
             </section>
-          </div>
-
-          <div class="group">
-            <button type="button" id="reset" class="text-button">Reset to defaults</button>
           </div>
         </div>
       </aside>
@@ -385,6 +373,27 @@
           >
             <path d="M3 3h18v6H9v12H3z" />
             <path d="M7 3v3M11 3v2M15 3v3M19 3v2M3 13h3M3 17h2" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          id="reset"
+          class="icon-button view-toggle reset-button"
+          aria-label="Reset to defaults"
+          title="Reset to defaults · the text stays"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+            <path d="M4.5 4v4h4" />
           </svg>
         </button>
         <div class="pasteboard" id="pasteboard">

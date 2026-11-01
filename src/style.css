@@ -727,6 +727,11 @@ output {
   right: 56px;
 }
 
+/* Reset sits with the view toggles but is an action, so it never shows a pressed state. */
+.reset-button {
+  right: 92px;
+}
+
 .artboard-size input[type='number'] {
   width: 64px;
   font-variant-numeric: tabular-nums;

@@ -21,10 +21,10 @@ type Listener = (state: FontState) => void;
 
 let state: FontState = {
   current: {
-    name: 'Instrument Serif',
-    family: 'Instrument Serif',
+    name: 'EB Garamond',
+    family: 'EB Garamond',
     source: 'google',
-    weights: [400],
+    weights: [400, 500, 600, 700, 800],
   },
   loading: null,
   error: null,

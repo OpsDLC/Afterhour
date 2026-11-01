@@ -38,7 +38,6 @@ export function initFontPanel(): void {
     input: search,
     list,
     search: searchFonts,
-    group: (font) => font.group,
     renderItem: (font, li) => {
       const name = document.createElement('span');
       name.textContent = font.family;
