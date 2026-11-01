@@ -87,6 +87,7 @@ function layout(): void {
     height: `${sh}px`,
   });
   Object.assign(board.style, { width: `${w}px`, height: `${h}px`, transform: `scale(${zoom})` });
+  board.style.setProperty('--inv-zoom', String(1 / zoom));
   label.textContent = `${w} × ${h} px  ·  ${Math.round(zoom * 100)}%${extra ? `  ·  ${extra}` : ''}`;
   drawRulers();
 }
