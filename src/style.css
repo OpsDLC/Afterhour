@@ -606,6 +606,27 @@ output {
   pointer-events: none;
 }
 
+/* Guides from the rulers' type marks, only while a gesture changes the type (H4N-41). */
+.type-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.type-guides i {
+  position: absolute;
+}
+
+.guide-v {
+  width: 0;
+  border-left: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.guide-h {
+  height: 0;
+  border-top: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
 #panel-show {
   position: absolute;
   z-index: 2;

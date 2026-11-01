@@ -25,6 +25,7 @@ Jira project **H4N** (Epic H4N-1) is the source of truth for tasks. This page ke
 - **UI font:** the system UI font. The preview shows the user's font.
 - **Trade vocabulary**, no simplifying. The audience is typographers: tracking, leading, measure, Squint view.
 - **Hide what's rare, group what belongs together.** Use tabs and drawers deliberately. The preview is the hero.
+- **Engineering beauty, not decoration (Yunhan, 2026-11-01).** Every mark on screen must carry information. A pointer-following ruler marker looked cool but told nothing, so it was replaced by marks of the type's bounds and baselines. Cool is welcome; useless is not.
 - **Beauty pass on every new UI (Yunhan, 2026-10-31).** Any time new UI goes into the panel or onto the screen, design it for beauty before showing it: a clear type hierarchy, an aligned grid, generous and consistent spacing, hairlines rather than boxes, a single accent. A functional wireframe is not a mockup. Look at it critically, as an outside judge would, before sending it.
 - Layout: collapsible sidebar, Text pinned on top, tabs **Type / Layout / Rain**; preview fills the rest.
 
