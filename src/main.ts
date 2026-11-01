@@ -1,6 +1,7 @@
 import './style.css';
 import { loadGoogleFont } from './fonts/google';
 import { getFontState, switchFont } from './fonts/state';
+import { createHistory, type History } from './history';
 import { render } from './render';
 import {
   applyAuto,
@@ -35,10 +36,12 @@ textInput.addEventListener('input', update);
 
 // Every settings change goes through here: AUTO values follow the size, then panel and preview.
 let syncControls: (() => void)[] = [];
+let history: History<Settings> | null = null;
 const syncAll = () => {
   applyAuto(settings);
   for (const sync of syncControls) sync();
   update();
+  history?.record({ ...settings });
 };
 
 initFontPanel();
@@ -50,6 +53,7 @@ syncControls = [
 initSquintView();
 rain = initRainPanel(settings);
 syncAll();
+history = createHistory<Settings>({ ...settings });
 new ResizeObserver(() => updateMeasure(settings)).observe(
   document.getElementById('preview-block')!,
 );
@@ -59,6 +63,27 @@ document.getElementById('reset')!.addEventListener('click', () => {
   Object.assign(settings, DEFAULT_SETTINGS);
   settings.fontWeight = nearestWeight(getFontState().current.weights, settings.fontWeight);
   syncAll();
+});
+
+// Undo / redo every setting (H4N-42): ⌘Z / Ctrl+Z, ⇧⌘Z / Ctrl+Shift+Z / Ctrl+Y.
+// Inside text fields the browser's own undo applies.
+const typingText = (el: EventTarget | null) =>
+  el instanceof HTMLTextAreaElement ||
+  (el instanceof HTMLElement && el.isContentEditable) ||
+  (el instanceof HTMLInputElement && /^(text|number|search)$/.test(el.type));
+window.addEventListener('keydown', (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey || typingText(e.target)) return;
+  const k = e.key.toLowerCase();
+  const redo = (k === 'z' && e.shiftKey) || (k === 'y' && e.ctrlKey && !e.metaKey);
+  if (k !== 'z' && !redo) return;
+  e.preventDefault();
+  const state = redo ? history?.redo() : history?.undo();
+  if (!state) return;
+  Object.assign(settings, state);
+  const h = history;
+  history = null; // restoring is not a new change
+  syncAll();
+  history = h;
 });
 
 initPreviewGestures({
